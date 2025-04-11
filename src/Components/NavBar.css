@@ -1,0 +1,16 @@
+/* Navbar arka plan rengini değiştirme */
+.navbar-dark {
+    background-color: #101446 !important; /* Dark arka plan */
+    padding: 35px; /* İç boşlukları büyüt */
+  }
+  /* Navbar yazı tipini ve boyutunu değiştirme */
+  .navbar-brand-text {
+    font-size: 1.8rem; /* Marka yazısının boyutunu büyütme */
+    color: #ffffff; /* Yazıyı beyaz yapma */
+  }
+  .nav-link-text {
+    margin: 0 35px;
+    font-size: 1.7rem; /* Nav link yazı boyutunu büyütme */
+    color: #ffffff; /* Yazıyı beyaz yapma */
+    transition: color 0.1s ease; /* Renk değişiminin yumuşak geçiş yapması için */
+  }
