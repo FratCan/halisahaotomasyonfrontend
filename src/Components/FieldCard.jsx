@@ -16,7 +16,7 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
         }}
       >
         <Card.Img variant="top" src={field.image} />
-        <Card.Text className="fs-4 p-5">
+        <Card.Text className="fs-4 p-3">
           📍 {field.district} <br />
           ⏰ {field.hours} <br />
           {field.lighted ? "💡 Lighted" : "🌑 Not lighted"}
