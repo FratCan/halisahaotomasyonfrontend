@@ -3,8 +3,10 @@ import React from "react";
 import { Card, Button } from "react-bootstrap";
 
 function FieldCard({ field, onEdit, showEditButton = false }) {
+  const isAvailable = field.available;
   return (
-    <Card bg="light" border="primary" style={{ width: "100%" }}>
+    <Card bg="light" border="primary" style={{ width: "100%" , opacity: isAvailable ? 1 : 0.5,
+      transition: "opacity 0.3s ease",}}>
       <Card.Header className="text-center" style={{ fontSize: 22, color: "black" }}>
         {field.name}
       </Card.Header>

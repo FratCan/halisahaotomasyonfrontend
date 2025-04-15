@@ -1,44 +1,288 @@
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
-import { Container, Row, Col, Card} from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+"use client"
 
-function RegisterPage() {
+import { useState } from "react"
+import { Container, Row, Col, Form, Button, Card, Alert, InputGroup } from "react-bootstrap"
+import { Eye, EyeOff, User, Mail, MapPin, Calendar } from "lucide-react"
+import { Link } from 'react-router-dom'
+
+export default function RegisterPage() {
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        city: "",
+        district: "",
+        birthDate: "",
+        agreeTerms: false,
+    })
+
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [validated, setValidated] = useState(false)
+    const [error, setError] = useState("")
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target
+        setFormData({
+        ...formData,
+        [name]: type === "checkbox" ? checked : value,
+        })
+    }
+    const calculateAge = (birthDate) => {
+        const birthDateObj = new Date(birthDate)
+        const today = new Date()
+        let age = today.getFullYear() - birthDateObj.getFullYear()
+        const monthDifference = today.getMonth() - birthDateObj.getMonth()
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDateObj.getDate())) {
+            age--
+        }
+        return age
+    }
+    const handleSubmit = (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+
+    if (form.checkValidity() === false) {
+        event.stopPropagation()
+        setValidated(true)
+        return
+    }
+
+    const age = calculateAge(formData.birthDate)
+    if (age < 18) {
+        setError("18 yaşından küçük kullanıcılar kayıt olamaz.")
+        return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+        setError("Şifreler eşleşmiyor!")
+        return
+    }
+
+    setValidated(true)
+    setError("")
+
+    // Here you would typically handle the registration logic
+    console.log("Registration with:", formData)
+    }
+
     return (
-        <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
-            <Row className="w-100">
-                <Col xl={10} md={6} lg={6} className="mx-auto">
-                    <Card className="p-2 shadow" bg='light' style={{fontSize:"20px"}}>
-                        <Card.Body>
-                            <Card.Title className="text-center mb-4">Kayıt Ol</Card.Title>
-                            <Form>
-                                <Form.Group className="mb-3" controlId="formBasicName">
-                                    <Form.Label>İsim</Form.Label>
-                                    <Form.Control type="name" placeholder="İsim girin" />
-                                </Form.Group>
-                                <Form.Group className="mb-3" controlId="formBasicEmail">
-                                    <Form.Label>E Posta Adresi</Form.Label>
-                                    <Form.Control type="email" placeholder="E-posta girin" />
-                                </Form.Group>
-                                <Form.Group className="mb-3" controlId="formBasicPassword">
-                                    <Form.Label>Şifre</Form.Label>
-                                    <Form.Control type="password" placeholder="Şifre" />
-                                </Form.Group>
-                                <Button variant="primary" type="submit" block>
-                                    Kayıt Ol
-                                </Button>
-                            </Form>
-                            <br></br>
-                            <p>Zaten hasabın var mı ?</p>
-                            <Link to="/login" className="btn btn-primary">
-                                Giriş Yap
-                            </Link>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
-    );
-}
+        <Container fluid style={{ maxWidth: "2600px", width: "100%" }}  className="bg-light min-vh-100 d-flex align-items-center justify-content-center py-5 ">
+        <Row className="justify-content-center w-100">
+            <Col xs={12} sm={10} md={8} lg={6} xl={5}>
+            <Card className="shadow-lg border-0 rounded-lg">
+                <Card.Header className="bg-primary text-white text-center py-4">
+                <h2 className="fw-bold mb-0">Online Halısaham</h2>
+                </Card.Header>
+                <Card.Body className="p-4 p-md-5">
+                {error && <Alert variant="danger">{error}</Alert>}
 
-export default RegisterPage;
+                <Form noValidate validated={validated} onSubmit={handleSubmit}>
+                    <Row className="mb-3">
+                    <Col md={4}>
+                        <Form.Group className="mb-3" controlId="firstName">
+                        <Form.Label>Ad</Form.Label>
+                        <InputGroup>
+                            <InputGroup.Text>
+                            <User size={16} />
+                            </InputGroup.Text>
+                            <Form.Control
+                            type="text"
+                            name="firstName"
+                            placeholder="Adınız"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            required
+                            />
+                            <Form.Control.Feedback type="invalid">Lütfen adınızı giriniz.</Form.Control.Feedback>
+                        </InputGroup>
+                        </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                        <Form.Group className="mb-3" controlId="lastName">
+                        <Form.Label>Soyad</Form.Label>
+                        <Form.Control
+                            type="text"
+                            name="lastName"
+                            placeholder="Soyadınız"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            required
+                        />
+                        <Form.Control.Feedback type="invalid">Lütfen soyadınızı giriniz.</Form.Control.Feedback>
+                        </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                    <Form.Group className="mb-3" controlId="username">
+                    <Form.Label>Kullanıcı Adı</Form.Label>
+                    <InputGroup>
+                        <InputGroup.Text>@</InputGroup.Text>
+                        <Form.Control
+                        type="text"
+                        name="username"
+                        placeholder="Kullanıcı adınızı giriniz"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                        />
+                        <Form.Control.Feedback type="invalid">Lütfen bir kullanıcı adı giriniz.</Form.Control.Feedback>
+                    </InputGroup>
+                    </Form.Group>
+                    </Col>
+                    </Row>
+
+                    <Row className="mb-3">
+                    <Col md={4}>
+                    <Form.Group className="mb-3" controlId="email">
+                    <Form.Label>E-posta Adresi</Form.Label>
+                    <InputGroup>
+                        <InputGroup.Text>
+                        <Mail size={16} />
+                        </InputGroup.Text>
+                        <Form.Control
+                        type="email"
+                        name="email"
+                        placeholder="E-posta adresinizi giriniz"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        />
+                        <Form.Control.Feedback type="invalid">
+                        Lütfen geçerli bir e-posta adresi giriniz.
+                        </Form.Control.Feedback>
+                    </InputGroup>
+                    </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                        <Form.Group controlId="city">
+                        <Form.Label>Şehir</Form.Label>
+                        <InputGroup>
+                            <InputGroup.Text>
+                            <MapPin size={16} />
+                            </InputGroup.Text>
+                            <Form.Control
+                            type="text"
+                            name="city"
+                            placeholder="Şehir"
+                            value={formData.city}
+                            onChange={handleChange}
+                            required
+                            />
+                            <Form.Control.Feedback type="invalid">Lütfen şehir giriniz.</Form.Control.Feedback>
+                        </InputGroup>
+                        </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                        <Form.Group controlId="district">
+                        <Form.Label>İlçe</Form.Label>
+                        <Form.Control
+                            type="text"
+                            name="district"
+                            placeholder="İlçe"
+                            value={formData.district}
+                            onChange={handleChange}
+                            required
+                        />
+                        <Form.Control.Feedback type="invalid">Lütfen ilçe giriniz.</Form.Control.Feedback>
+                        </Form.Group>
+                    </Col>
+                    </Row>
+
+                    <Row>
+                        <Col md={4}>
+                        <Form.Group className="mb-3" controlId="birthDate">
+                    <Form.Label>Doğum Tarihi</Form.Label>
+                    <InputGroup>
+                        <InputGroup.Text>
+                        <Calendar size={16} />
+                        </InputGroup.Text>
+                        <Form.Control
+                        type="date"
+                        name="birthDate"
+                        value={formData.birthDate}
+                        onChange={handleChange}
+                        required
+                        />
+                        <Form.Control.Feedback type="invalid">Lütfen doğum tarihinizi giriniz.</Form.Control.Feedback>
+                    </InputGroup>
+                    </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                        <Form.Group className="mb-3" controlId="password">
+                    <Form.Label>Şifre</Form.Label>
+                    <InputGroup>
+                        <Form.Control
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder="Şifrenizi giriniz"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        minLength={8}
+                        />
+                        <Button variant="outline-secondary" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Button>
+                        <Form.Control.Feedback type="invalid">Şifreniz en az 8 karakter olmalıdır.</Form.Control.Feedback>
+                    </InputGroup>
+                    </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                        <Form.Group className="mb-3" controlId="confirmPassword">
+                    <Form.Label>Şifre Tekrar</Form.Label>
+                    <InputGroup>
+                        <Form.Control
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        placeholder="Şifrenizi tekrar giriniz"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                        minLength={8}
+                        />
+                        <Button variant="outline-secondary" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Button>
+                        <Form.Control.Feedback type="invalid">Şifrenizi tekrar giriniz.</Form.Control.Feedback>
+                    </InputGroup>
+                    </Form.Group>
+                        </Col>
+                    </Row>
+
+                    <Form.Group className="mb-4" controlId="agreeTerms">
+                    <Form.Check
+                        type="checkbox"
+                        name="agreeTerms"
+                        label="Kullanım şartlarını ve gizlilik politikasını kabul ediyorum"
+                        checked={formData.agreeTerms}
+                        onChange={handleChange}
+                        required
+                        feedback="Bu alanı işaretlemeniz gerekmektedir."
+                        feedbackType="invalid"
+                    />
+                    </Form.Group>
+
+                    <div className="d-grid">
+                    <Button variant="primary" type="submit" size="lg" className="fw-bold">
+                        Kayıt Ol
+                    </Button>
+                    </div>
+                </Form>
+                </Card.Body>
+                <Card.Footer className="py-3 bg-white text-center">
+                <div className="text-muted">
+                    Zaten bir hesabınız var mı?{" "}
+                    <Link to="/login" className="text-primary text-decoration-none">
+                    Giriş Yap
+                    </Link>
+                </div>
+                </Card.Footer>
+            </Card>
+            </Col>
+        </Row>
+        </Container>
+    )
+}

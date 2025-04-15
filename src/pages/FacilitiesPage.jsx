@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import {Container,Card,Button,Modal,Form,Row,Col,} from "react-bootstrap";
-import FieldCard from "../Components/FieldCard";
+import {Card,Button,Modal,Form,Row,Col,} from "react-bootstrap";
 import { useFieldContext } from "../Components/FieldContext"; // Import the context
 
 function FacilitiesPage() {
@@ -138,93 +137,93 @@ function FacilitiesPage() {
         ))}
       </Row>
 
-      {showModal && selectedFacility && (
-  <Modal show={showModal} onHide={handleCloseModal}>
-    <Modal.Header closeButton>
-      <Modal.Title>Tesis Düzenle: {selectedFacility.name}</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      <Form onSubmit={handleFacilityUpdate}>
-        <Form.Group controlId="name">
-          <Form.Label>Adı</Form.Label>
-          <Form.Control type="text" defaultValue={selectedFacility.name} />
-        </Form.Group>
+    {showModal && selectedFacility && (
+    <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal.Header closeButton>
+        <Modal.Title>Tesis Düzenle: {selectedFacility.name}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form onSubmit={handleFacilityUpdate}>
+          <Form.Group controlId="name">
+            <Form.Label>Adı</Form.Label>
+            <Form.Control type="text" defaultValue={selectedFacility.name} />
+          </Form.Group>
 
-        <Form.Group controlId="phone">
-          <Form.Label>Telefon</Form.Label>
-          <Form.Control type="text" defaultValue={selectedFacility.phone} />
-        </Form.Group>
+          <Form.Group controlId="phone">
+            <Form.Label>Telefon</Form.Label>
+            <Form.Control type="text" defaultValue={selectedFacility.phone} />
+          </Form.Group>
 
-        <Form.Group controlId="transport">
-          <Form.Check
-            type="checkbox"
-            label="Ulaşım"
-            defaultChecked={selectedFacility.transport}
-          />
-        </Form.Group>
+          <Form.Group controlId="transport">
+            <Form.Check
+              type="checkbox"
+              label="Ulaşım"
+              defaultChecked={selectedFacility.transport}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="eldiven">
-          <Form.Check
-            type="checkbox"
-            label="Eldiven"
-            defaultChecked={selectedFacility.eldiven}
-          />
-        </Form.Group>
+          <Form.Group controlId="eldiven">
+            <Form.Check
+              type="checkbox"
+              label="Eldiven"
+              defaultChecked={selectedFacility.eldiven}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="uniform">
-          <Form.Check
-            type="checkbox"
-            label="Forma"
-            defaultChecked={selectedFacility.uniform}
-          />
-        </Form.Group>
+          <Form.Group controlId="uniform">
+            <Form.Check
+              type="checkbox"
+              label="Forma"
+              defaultChecked={selectedFacility.uniform}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="cafe">
-          <Form.Check
-            type="checkbox"
-            label="Kafe"
-            defaultChecked={selectedFacility.cafe}
-          />
-        </Form.Group>
+          <Form.Group controlId="cafe">
+            <Form.Check
+              type="checkbox"
+              label="Kafe"
+              defaultChecked={selectedFacility.cafe}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="hotwater">
-          <Form.Check
-            type="checkbox"
-            label="Sıcak Su"
-            defaultChecked={selectedFacility.hotwater}
-          />
-        </Form.Group>
+          <Form.Group controlId="hotwater">
+            <Form.Check
+              type="checkbox"
+              label="Sıcak Su"
+              defaultChecked={selectedFacility.hotwater}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="shower">
-          <Form.Check
-            type="checkbox"
-            label="Duş"
-            defaultChecked={selectedFacility.shower}
-          />
-        </Form.Group>
+          <Form.Group controlId="shower">
+            <Form.Check
+              type="checkbox"
+              label="Duş"
+              defaultChecked={selectedFacility.shower}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="toilet">
-          <Form.Check
-            type="checkbox"
-            label="Tuvalet"
-            defaultChecked={selectedFacility.toilet}
-          />
-        </Form.Group>
+          <Form.Group controlId="toilet">
+            <Form.Check
+              type="checkbox"
+              label="Tuvalet"
+              defaultChecked={selectedFacility.toilet}
+            />
+          </Form.Group>
 
-        <Form.Group controlId="shoes">
-          <Form.Check
-            type="checkbox"
-            label="Ayakkabı"
-            defaultChecked={selectedFacility.shoes}
-          />
-        </Form.Group>
+          <Form.Group controlId="shoes">
+            <Form.Check
+              type="checkbox"
+              label="Ayakkabı"
+              defaultChecked={selectedFacility.shoes}
+            />
+          </Form.Group>
 
-        <Button variant="primary" type="submit" className="mt-3">
-          Kaydet
-        </Button>
-      </Form>
-    </Modal.Body>
-  </Modal>
+          <Button variant="primary" type="submit" className="mt-3">
+            Kaydet
+          </Button>
+        </Form>
+      </Modal.Body>
+    </Modal>
 )}
 
     </>

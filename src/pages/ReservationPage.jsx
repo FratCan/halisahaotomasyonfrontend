@@ -3,6 +3,8 @@
         import { useFieldContext } from "../Components/FieldContext";
         import FieldCard from "../Components/FieldCard";
         import Calendar from "../Components/Calendar";
+        import ReservationFilter from "../Components/ReservationFilter"; // 🔍 EKLENDİ
+
 
         const ReservationPage = () => {
         const { fields } = useFieldContext(); // Use context to get fields
@@ -41,7 +43,7 @@
 
         return (
             <Container fluid className="d-flex justify-content-center align-items-center">
-            <Row className="w-100 my-3">
+            <Row className="w-100 my-4">
                 {/* Left Section: Field Card */}
                 <Col md={3} className="d-flex justify-content-center">
                 <div style={{
@@ -55,9 +57,9 @@
                 </div>
                 </Col>
                 {/* Right Section: Calendar */}
-                <Col md={9} className="border border-light">
+                <Col md={9} className="border border-light shadow">
 
-                <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="d-flex justify-content-between align-items-center mt-3 ">
                     <Button variant="light" onClick={() => setSelectedFieldIndex(prevIndex => (prevIndex === 0 ? fields.length - 1 : prevIndex - 1))}>&larr; Previous Field</Button>
                     <h5>{selectedField.name}</h5>
                     <Button variant="light" onClick={() => setSelectedFieldIndex(prevIndex => (prevIndex === fields.length - 1 ? 0 : prevIndex + 1))}>Next Field &rarr;</Button>
@@ -70,6 +72,7 @@
                     hoursRange={hoursRange}
                 />
                 </Col>
+                <ReservationFilter />
             </Row>
             {/* Modal: Reservation Details */}
             {selectedSlot && (
