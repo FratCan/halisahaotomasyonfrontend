@@ -72,7 +72,8 @@ function NavBar() {
 			</Nav.Link>
 
 			<Nav.Link
-				href="#announcement"
+				as={Link}
+				to="/announcement"
 				className="mx-5" // boşluk eklendi
 				style={{
 				color: "#ffffff",

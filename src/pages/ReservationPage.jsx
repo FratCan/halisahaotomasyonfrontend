@@ -39,7 +39,17 @@
             return days;
         };
         const weekDays = getWeekDays();
-
+        const isAvailable = (day, hour) => {
+            const dayName = day.toLocaleDateString("en-US", { weekday: "long" });
+            const hourInt = parseInt(hour, 10);
+        
+            if (!selectedField?.workingDays?.includes(dayName)) return false;
+        
+            const [start, end] = selectedField?.hours?.split(" - ").map(time => parseInt(time.split(":")[0])) || [9, 21];
+        
+            return hourInt >= start && hourInt < end;
+        };
+        
 
         return (
             <Container fluid className="d-flex justify-content-center align-items-center">
@@ -65,12 +75,14 @@
                     <Button variant="light" onClick={() => setSelectedFieldIndex(prevIndex => (prevIndex === fields.length - 1 ? 0 : prevIndex + 1))}>Next Field &rarr;</Button>
                 </div>
                 <Calendar
-                    currentDate={currentDate}
-                    setCurrentDate={setCurrentDate}
-                    weekDays={weekDays}
-                    handleSlotClick={handleSlotClick}
-                    hoursRange={hoursRange}
-                />
+    currentDate={currentDate}
+    setCurrentDate={setCurrentDate}
+    weekDays={weekDays}
+    handleSlotClick={handleSlotClick}
+    hoursRange={hoursRange}
+    isAvailable={isAvailable}
+/>
+
                 </Col>
                 <ReservationFilter />
             </Row>
