@@ -37,6 +37,16 @@ function FieldsPage() {
             setDaysAvailable(defaultAvailability);
         }
     }, [selectedField]);
+    useEffect(() => {
+        if (selectedField && typeof selectedField.available === "boolean") {
+            const updatedDays = {};
+            allDays.forEach((day) => {
+                updatedDays[day] = selectedField.available;
+            });
+            setDaysAvailable(updatedDays);
+        }
+    }, [selectedField?.available]);
+    
 
     const handleEditClick = (field) => {
         if (field) {
@@ -51,26 +61,29 @@ function FieldsPage() {
     };
 
     const handleFieldUpdate = (e) => {
-        e.preventDefault();
+            e.preventDefault();
 
-        const selectedDays = Object.keys(daysAvailable)
+            const form = e.target;
+
+            const selectedDays = Object.keys(daysAvailable)
             .filter((day) => daysAvailable[day])
             .map((day) => day);
 
-        const updatedField = {
+            const updatedField = {
             ...selectedField,
-            name: e.target.name.value,
-            district: e.target.district.value,
-            hours: e.target.hours.value,
-            price: e.target.price.value,
-            lighted: e.target.lighted.checked,
-            available: e.target.available.checked,
+            name: form.name.value,
+            district: form.district.value,
+            hours: form.hours.value,
+            price: Number(form.price.value),
+            lighted: form.lighted.checked,
+            available: form.available?.checked ?? selectedField.available, // Burada dikkat!
             workingDays: selectedDays,
-        };
-
-        updateField(updatedField);
-        handleCloseModal();
+            };
+            updateField(updatedField);
+            setSelectedField(null);
+            setShowModal(false);
     };
+
 
     // Toggle individual day selection
     const toggleDay = (day) => {
@@ -145,39 +158,45 @@ function FieldsPage() {
                                     defaultChecked={selectedField.lighted}
                                 />
                             </Form.Group>
-
                             <Form.Group controlId="available">
                                 <Form.Check
                                     type="checkbox"
                                     label="Mevcut"
-                                    defaultChecked={selectedField.available}
+                                    checked={selectedField.available}
+                                    onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        setSelectedField((prev) => ({ ...prev, available: isChecked }));
+
+                                        // Mevcut işaretlenince tüm günleri açık yap, kaldırılınca kapat
+                                        const updatedDays = {};
+                                        allDays.forEach((day) => {
+                                            updatedDays[day] = isChecked;
+                                        });
+                                        setDaysAvailable(updatedDays);
+                                    }}
                                 />
+
+                                {selectedField.available && (
+                                    <div className="mt-2">
+                                        <Form.Label>Çalışma Günleri</Form.Label>
+                                        <div>
+                                            {allDays.map((day) => (
+                                                <Form.Check
+                                                    inline
+                                                    key={day}
+                                                    label={day}
+                                                    name="workingDays"
+                                                    type="checkbox"
+                                                    value={day}
+                                                    checked={daysAvailable[day]}
+                                                    onChange={() => toggleDay(day)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </Form.Group>
 
-                            <Form.Group controlId="workingDays">
-                                <Form.Label>Çalışma Günleri</Form.Label>
-                                <div>
-                                    <Form.Check
-                                        inline
-                                        label="Mevcut"
-                                        name="workingDays"
-                                        type="button"
-                                        onClick={toggleAllDays}
-                                    />
-                                    {allDays.map((day) => (
-                                        <Form.Check
-                                            inline
-                                            key={day}
-                                            label={day}
-                                            name="workingDays"
-                                            type="checkbox"
-                                            value={day}
-                                            checked={daysAvailable[day]}
-                                            onChange={() => toggleDay(day)}
-                                        />
-                                    ))}
-                                </div>
-                            </Form.Group>
 
                             <Button variant="primary" type="submit" className="mt-3">
                                 Kaydet
