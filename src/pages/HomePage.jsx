@@ -117,15 +117,14 @@ function HomePage() {
           <Card
             border="primary"
             style={{
-              height: "700px",
-            
+              height: "685px",
               backgroundColor: "#f5f5f5",
             }}
             className="p-4 rounded"
           >
             <Nav
               className="justify-content-center"
-              style={{ fontSize: 18 }}
+              style={{ fontSize: 15 }}
               variant="tabs"
               defaultActiveKey={selectedField}
             >
@@ -142,7 +141,7 @@ function HomePage() {
               ))}
             </Nav>
             <h4 className="text-center mt-3">Seçili Saha: {selectedField}</h4>
-            <div className="d-flex justify-content-center my-4">
+            <div className="d-flex justify-content-center my-2">
               <Button
                 variant="light"
                 className="rounded-pill px-3 me-2"
@@ -161,7 +160,10 @@ function HomePage() {
                 {">"}
               </Button>
             </div>
-
+            
+            <div
+              style={{ maxHeight: "600px", overflowY: "auto", overflowX: "hidden", fontSize: 18 }}
+            >
             <Row>
               {timeSlots.map((slot) => (
                 <Col xs={4} key={slot.time} className="mb-2 text-center">
@@ -182,6 +184,7 @@ function HomePage() {
                 </Col>
               ))}
             </Row>
+            </div>
           </Card>
         </Col>
       </Row>

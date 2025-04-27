@@ -75,14 +75,13 @@
                     <Button variant="light" onClick={() => setSelectedFieldIndex(prevIndex => (prevIndex === fields.length - 1 ? 0 : prevIndex + 1))}>Next Field &rarr;</Button>
                 </div>
                 <Calendar
-    currentDate={currentDate}
-    setCurrentDate={setCurrentDate}
-    weekDays={weekDays}
-    handleSlotClick={handleSlotClick}
-    hoursRange={hoursRange}
-    isAvailable={isAvailable}
-/>
-
+                    currentDate={currentDate}
+                    setCurrentDate={setCurrentDate}
+                    weekDays={weekDays}
+                    handleSlotClick={handleSlotClick}
+                    hoursRange={hoursRange}
+                    isAvailable={isAvailable}
+                />
                 </Col>
                 <ReservationFilter />
             </Row>

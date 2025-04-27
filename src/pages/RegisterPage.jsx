@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Container, Row, Col, Form, Button, Card, Alert, InputGroup } from "react-bootstrap"
 import { Eye, EyeOff, User, Mail, MapPin, Calendar } from "lucide-react"
 import { Link } from 'react-router-dom'
+import {registerApp} from '../api/AuthApi' // Register fonksiyonunu import et
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -12,15 +13,12 @@ export default function RegisterPage() {
         username: "",
         email: "",
         password: "",
-        confirmPassword: "",
         city: "",
-        district: "",
+        town: "",
         birthDate: "",
-        agreeTerms: false,
     })
 
     const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [validated, setValidated] = useState(false)
     const [error, setError] = useState("")
 
@@ -31,6 +29,7 @@ export default function RegisterPage() {
         [name]: type === "checkbox" ? checked : value,
         })
     }
+    
     const calculateAge = (birthDate) => {
         const birthDateObj = new Date(birthDate)
         const today = new Date()
@@ -41,38 +40,50 @@ export default function RegisterPage() {
         }
         return age
     }
-    const handleSubmit = (event) => {
-    event.preventDefault()
-    const form = event.currentTarget
+    
+    const handleSubmit = async (event) => {
+        event.preventDefault()
+        const form = event.currentTarget
 
-    if (form.checkValidity() === false) {
-        event.stopPropagation()
+        if (form.checkValidity() === false) {
+            event.stopPropagation()
+            setValidated(true)
+            return
+        }
+
+        const age = calculateAge(formData.birthDate)
+        if (age < 18) {
+            setError("18 yaşından küçük kullanıcılar kayıt olamaz.")
+            return
+        }
         setValidated(true)
-        return
-    }
+        setError("")
 
-    const age = calculateAge(formData.birthDate)
-    if (age < 18) {
-        setError("18 yaşından küçük kullanıcılar kayıt olamaz.")
-        return
-    }
+        try {
+            // Register işlemi
+            const response = await registerApp(
+                formData.firstName,
+                formData.lastName,
+                formData.username,
+                formData.email,
+                formData.city,
+                formData.district,
+                formData.birthDate,
+                formData.password
+            )
 
-    if (formData.password !== formData.confirmPassword) {
-        setError("Şifreler eşleşmiyor!")
-        return
-    }
-
-    setValidated(true)
-    setError("")
-
-    // Here you would typically handle the registration logic
-    console.log("Registration with:", formData)
+            // Kayıt başarılı, burada kullanıcıyı yönlendirebilirsiniz veya başka işlemler yapabilirsiniz
+            console.log("Kayıt başarılı:", response)
+        } catch (error) {
+            setError("Kayıt işlemi sırasında bir hata oluştu.")
+            console.error("Kayıt hatası:", error)
+        }
     }
 
     return (
-        <Container fluid style={{ maxWidth: "2600px", width: "100%" }}  className="bg-light min-vh-100 d-flex align-items-center justify-content-center py-5 ">
+        <Container fluid style={{ maxWidth: "3600px", width: "100%" }}  className="bg-light min-vh-100 d-flex align-items-center justify-content-center py-5 ">
         <Row className="justify-content-center w-100">
-            <Col xs={12} sm={10} md={8} lg={6} xl={5}>
+        <Col xs={12} sm={12} md={10} lg={10} xl={8}>
             <Card className="shadow-lg border-0 rounded-lg">
                 <Card.Header className="bg-primary text-white text-center py-4">
                 <h2 className="fw-bold mb-0">Online Halısaham</h2>
@@ -227,26 +238,6 @@ export default function RegisterPage() {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </Button>
                         <Form.Control.Feedback type="invalid">Şifreniz en az 8 karakter olmalıdır.</Form.Control.Feedback>
-                    </InputGroup>
-                    </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                        <Form.Group className="mb-3" controlId="confirmPassword">
-                    <Form.Label>Şifre Tekrar</Form.Label>
-                    <InputGroup>
-                        <Form.Control
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Şifrenizi tekrar giriniz"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        required
-                        minLength={8}
-                        />
-                        <Button variant="outline-secondary" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </Button>
-                        <Form.Control.Feedback type="invalid">Şifrenizi tekrar giriniz.</Form.Control.Feedback>
                     </InputGroup>
                     </Form.Group>
                         </Col>
