@@ -92,6 +92,10 @@ function FacilitiesPage() {
                         {facility.uniform ? "Evet" : "Hayır"}
                       </span>{" "}
                       <br />
+                      <strong>Email:</strong> {facility.phone} <br />
+                      <strong>BanAccountInfo:</strong> {facility.phone} <br />
+                      <strong>Adres:</strong> {facility.phone} <br />
+                      <strong>Adres Detay:</strong> {facility.phone} <br />
                       <strong>Eldiven:</strong>{" "}
                       <span style={{ color: facility.eldiven ? "green" : "red" }}>
                         {facility.eldiven ? "Evet" : "Hayır"}

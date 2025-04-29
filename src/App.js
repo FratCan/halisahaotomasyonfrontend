@@ -4,8 +4,8 @@ import FacilitiesPage from "./pages/FacilitiesPage";
 import HomePage from "./pages/HomePage";
 import ReservationPage from "./pages/ReservationPage";
 import RegisterPage from "./pages/RegisterPage";
-import LoginPage from "./pages/LoginPage";
 import FieldsPage from "./pages/FieldsPage";
+
 import ProtectedRoute from "./Components/ProtectedRoute";
 import AnnouncementPage from './pages/AnnouncementPage';
 import { AuthProvider } from "./Context/AuthContext";
@@ -22,8 +22,8 @@ function Appcontent() {
     <>
       {shouldShowNav && <NavBar />}
       <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<FacilitiesPage />} />
+          <Route path="/login" element={<FacilitiesPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/facility" element={<ProtectedRoute><FacilitiesPage /></ProtectedRoute>} />

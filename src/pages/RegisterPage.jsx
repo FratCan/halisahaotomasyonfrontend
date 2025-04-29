@@ -67,7 +67,7 @@ export default function RegisterPage() {
                 formData.username,
                 formData.email,
                 formData.city,
-                formData.district,
+                formData.town,
                 formData.birthDate,
                 formData.password
             )
@@ -187,13 +187,13 @@ export default function RegisterPage() {
                         </Form.Group>
                     </Col>
                     <Col md={4}>
-                        <Form.Group controlId="district">
+                        <Form.Group controlId="town">
                         <Form.Label>İlçe</Form.Label>
                         <Form.Control
                             type="text"
-                            name="district"
+                            name="town"
                             placeholder="İlçe"
-                            value={formData.district}
+                            value={formData.town}
                             onChange={handleChange}
                             required
                         />
