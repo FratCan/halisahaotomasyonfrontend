@@ -3,19 +3,20 @@ import React from "react";
 import { Card, Button } from "react-bootstrap";
 
 function FieldCard({ field, onEdit, showEditButton = false }) {
-  // Eski “available” prop’u yoksa yeni “isAvailable”’ı kullan
   const isAvailable = field.available ?? field.isAvailable;
-
-  // Eski “price” prop’u yoksa yeni “pricePerHour”’ı kullan
   const price = field.pricePerHour ?? field.price;
-
-  // Eskiden field.lighted, yeni JSON’da lightingAvailable
   const lighted = field.lighted ?? field.lightingAvailable;
 
-  const imgSrc = Array.isArray(field.photos)
-  ? field.photos[0]
-  : field.photos; // örneğin "data:image/jpeg;base64,...."
+  const baseImageUrl = "http://localhost:3000/Facilities/"; // 💡 Buraya kendi backend URL'ini yazabilirsin
+  let imgSrc = "";
 
+  if (Array.isArray(field.photos)) {
+    imgSrc = field.photos.length > 0 ? baseImageUrl + field.photos[0] : null;
+  } else if (typeof field.photos === "string" && field.photos !== "") {
+    imgSrc = baseImageUrl + field.photos;
+  } else {
+    imgSrc = "https://via.placeholder.com/300x200?text=No+Image"; // Fotoğraf yoksa default resim
+  }
 
   return (
     <Card
@@ -43,10 +44,11 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
       >
         {/* FOTO */}
         <Card.Img
-  variant="top"
-  src={imgSrc || undefined}
-  alt={field.name}
-/>
+          variant="top"
+          src={imgSrc}
+          alt={field.name}
+          style={{ height: "200px", objectFit: "cover", marginBottom: "10px" }}
+        />
 
         {/* SAAT ve AYDINLATMA */}
         <Card.Text className="fs-4 p-3">
@@ -72,7 +74,7 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
 
         {/* FİYAT ve DURUM */}
         <Card.Text className="text-center fs-5">
-          <strong>${field.pricePerHour}/hour</strong>
+          <strong>${price}/hour</strong>
           <span
             className="ms-5"
             style={{ color: isAvailable ? "green" : "red" }}

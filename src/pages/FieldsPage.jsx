@@ -180,7 +180,8 @@
         );
         }
     };
-    const handleDeleteSubmit = async (e) => {
+    //Saha silme
+    const handleFieldDelete = async (e) => {
         e.preventDefault();
         const f = fields.find(
         (f) => f.name.trim().toLowerCase() === deleteName.trim().toLowerCase()
@@ -478,7 +479,7 @@
         )}
 
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-            <Form onSubmit={handleDeleteSubmit}>
+            <Form onSubmit={handleFieldDelete}>
             <Modal.Header closeButton>
                 <Modal.Title>Saha Sil</Modal.Title>
             </Modal.Header>

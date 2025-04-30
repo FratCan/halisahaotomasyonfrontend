@@ -9,7 +9,6 @@ export const getFields = async () => {
 };
 
 export const createField = async (field) => {
-
   const { data } = await axios.post(API_URL, field);
   return data;
 };

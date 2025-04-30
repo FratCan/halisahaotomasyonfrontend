@@ -32,9 +32,9 @@
           birthday,
           password
         });
-    
+
         console.log('Kayıt başarılı:', response.data);
-    
+
         // Kayıt başarılıysa başka işlemler yapabilirsin (örneğin, login, yönlendirme vb.)
         return response.data;
       } catch (error) {
@@ -42,10 +42,13 @@
         throw error;
       }
     };
-    
+    export const forgot_password = async (email) => {
+      const response = await axios.post("http://localhost:5021/api/Auth/forgot-password", { email });
+      return response.data;
+    };
 
-    
+    export const reset_password = (data) => {
+      return axios.post("http://localhost:5021/api/Auth/reset-password", data);
+    };
 
-
-    
 export {loginApp, registerApp}

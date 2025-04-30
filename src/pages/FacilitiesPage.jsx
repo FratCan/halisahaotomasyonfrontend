@@ -1,235 +1,268 @@
-import React, { useState } from "react";
-import {Card,Button,Modal,Form,Row,Col,} from "react-bootstrap";
-import { useFieldContext } from "../Components/FieldContext"; // Import the context
+import React, { useState, useEffect } from "react";
+import { Row, Col, Modal, Form, Button } from "react-bootstrap";
+import { getFacilities, updateFacility } from "../api/FacilityApi";
+import FacilityCard from "../Components/FacilityCard";
 
 function FacilitiesPage() {
-  const {facilities,updateFacility } = useFieldContext(); // Access state and methods from context
+  const [facilities, setFacilities] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
 
-  const handleEditClick = (field, facility) => {
-      setSelectedFacility(facility);
-      setShowModal(true);
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
+
+  const fetchFacilities = async () => {
+    try {
+      const data = await getFacilities();
+      setFacilities(data);
+    } catch (err) {
+      console.error("Facilities çekilemedi:", err);
+    }
+  };
+
+  const handleEditClick = (id) => {
+    const fresh = facilities.find((f) => f.id === id);
+    setSelectedFacility(fresh);
+    setPhotoPreview(fresh.photos || "");
+    setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedFacility(null);
+    setPhotoFile(null);
+    setPhotoPreview("");
   };
 
-  const handleFacilityUpdate = (e) => {
+  const handleFacilityUpdate = async (e) => {
     e.preventDefault();
-    const updatedFacility = {
-      ...selectedFacility,
-      name: e.target.name.value,
-      phone: e.target.phone.value,
-      transport: e.target.transport.checked,
-      uniform: e.target.uniform.checked,
-      cafe: e.target.cafe.checked,
-      hotwater: e.target.hotwater.checked,
-      shower: e.target.shower.checked,
-      toilet: e.target.toilet.checked,
-      shoes: e.target.shoes.checked,
-      eldiven: e.target.eldiven.checked,
+    if (!selectedFacility) return;
+  
+    const elems = e.target.elements;
+    const updatedData = {
+      name:           elems.name.value,
+      email:          elems.email.value,
+      location:       elems.location.value,
+      addressDetails: elems.addressDetails.value,
+      totalFields:    Number(elems.totalFields.value),
+      phone:          elems.phone.value,
+      bankAccountInfo: elems.bankAccountInfo.value,
+      transport:      elems.transport.checked,
+      uniform:        elems.uniform.checked,
+      hasCafeteria:   elems.hasCafeteria.checked,
+      hotwater:       elems.hotwater.checked,
+      hasShower:      elems.hasShower.checked,
+      hasToilet:      elems.hasToilet.checked,
+      shoes:          elems.shoes.checked,
+      eldiven:        elems.eldiven.checked,
+      // photos: skip for now
     };
-
-    updateFacility(updatedFacility); // Use updateFacility from context
-    handleCloseModal();
+  
+    console.log("🔄 Updating facility", selectedFacility.id, updatedData);
+  
+    try {
+      const result = await updateFacility(selectedFacility.id, updatedData);
+      console.log("✅ API returned:", result);
+      await fetchFacilities();      // reload list
+      handleCloseModal();
+    } catch (err) {
+      console.error("❌ Update failed:", err.response?.data || err.message);
+    }
   };
+  
 
   return (
     <>
       <h2 className="text-center my-4">Tesis</h2>
-      <Row
-        xs={1}
-        md={2}
-        className="g-5 justify-content-center"
-        style={{ padding: 10 }}
-      >
-        {facilities.map((facility, idx) => (
-          <Col key={idx} className="d-flex justify-content-center">
-            <Card
-              bg="light"
-              border="primary"
-              style={{
-                boxShadow: "0px 4px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              <Row className="g-0">
-                <Col md={5}>
-                  <Card.Img className="p-2"
-                    variant="top"
-                    src={facility.image}
-                    alt={facility.name}
-                    style={{
-                      height: "100%",
-                      objectFit: "cover",
-                      borderTopLeftRadius: "0.25rem",
-                      borderBottomLeftRadius: "0.25rem",
-                    }}
-                  />
-                </Col>
-                <Col md={7}>
-                  <Card.Body>
-                    <Card.Title
-                      style={{
-                        fontSize: "24px",
-                        fontWeight: "bold",
-                        color: "black",
-                      }}
-                    >
-                      {facility.name}
-                    </Card.Title>
-                    <Card.Text style={{ fontSize: "18px", color: "#000000" }}>
-                      <strong>Telefon:</strong> {facility.phone} <br />
-                      <strong>Servis:</strong>{" "}
-                      <span style={{ color: facility.transport ? "green" : "red" }}>
-                        {facility.transport ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Forma:</strong>{" "}
-                      <span style={{ color: facility.uniform ? "green" : "red" }}>
-                        {facility.uniform ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Email:</strong> {facility.phone} <br />
-                      <strong>BanAccountInfo:</strong> {facility.phone} <br />
-                      <strong>Adres:</strong> {facility.phone} <br />
-                      <strong>Adres Detay:</strong> {facility.phone} <br />
-                      <strong>Eldiven:</strong>{" "}
-                      <span style={{ color: facility.eldiven ? "green" : "red" }}>
-                        {facility.eldiven ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Kafe:</strong>{" "}
-                      <span style={{ color: facility.cafe ? "green" : "red" }}>
-                        {facility.cafe ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Sıcak Su:</strong>{" "}
-                      <span style={{ color: facility.hotwater ? "green" : "red" }}>
-                        {facility.hotwater ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Duş:</strong>{" "}
-                      <span style={{ color: facility.shower ? "green" : "red" }}>
-                        {facility.shower ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Tuvalet:</strong>{" "}
-                      <span style={{ color: facility.toilet ? "green" : "red" }}>
-                        {facility.toilet ? "Evet" : "Hayır"}
-                      </span>{" "}
-                      <br />
-                      <strong>Ayakkabı:</strong>{" "}
-                      <span style={{ color: facility.shoes ? "green" : "red" }}>
-                        {facility.shoes ? "Evet" : "Hayır"}
-                      </span>
-                    </Card.Text>
-                    <Button
-                      variant="primary"
-                      style={{ width: "100%" }}
-                      onClick={() => handleEditClick(null, facility)}
-                    >
-                      Düzenle
-                    </Button>
-                  </Card.Body>
-                </Col>
-              </Row>
-          </Card>
+      <Row xs={1} md={2} className="g-5 justify-content-center" style={{ padding: 10 }}>
+        {facilities.map((f) => (
+          <Col key={f.id} className="d-flex justify-content-center">
+            <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
           </Col>
         ))}
       </Row>
 
-    {showModal && selectedFacility && (
-    <Modal show={showModal} onHide={handleCloseModal}>
-      <Modal.Header closeButton>
-        <Modal.Title>Tesis Düzenle: {selectedFacility.name}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form onSubmit={handleFacilityUpdate}>
-          <Form.Group controlId="name">
-            <Form.Label>Adı</Form.Label>
-            <Form.Control type="text" defaultValue={selectedFacility.name} />
-          </Form.Group>
+      {showModal && selectedFacility && (
+        <Modal show onHide={handleCloseModal} size="lg">
+          <Modal.Header closeButton>
+            <Modal.Title>Tesis Düzenle: {selectedFacility.name}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form onSubmit={handleFacilityUpdate}>
+              <Row>
+                <Col>
+                  <Form.Group controlId="photos" className="mb-3">
+                    <Form.Label>Fotoğraf</Form.Label>
+                    {photoPreview && (
+                      <img
+                        src={photoPreview}
+                        alt="Saha"
+                        style={{ width: "100%", marginBottom: 10 }}
+                      />
+                    )}
+                    <Form.Control
+                      name="photoFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setPhotoFile(file);
+                          setPhotoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="phone">
-            <Form.Label>Telefon</Form.Label>
-            <Form.Control type="text" defaultValue={selectedFacility.phone} />
-          </Form.Group>
+                  <Form.Group controlId="name" className="mb-3">
+                    <Form.Label>Adı</Form.Label>
+                    <Form.Control
+                      name="name"
+                      type="text"
+                      defaultValue={selectedFacility.name}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="transport">
-            <Form.Check
-              type="checkbox"
-              label="Ulaşım"
-              defaultChecked={selectedFacility.transport}
-            />
-          </Form.Group>
+                  <Form.Group controlId="email" className="mb-3">
+                    <Form.Label>E-Mail</Form.Label>
+                    <Form.Control
+                      name="email"
+                      type="email"
+                      defaultValue={selectedFacility.email || ""}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="eldiven">
-            <Form.Check
-              type="checkbox"
-              label="Eldiven"
-              defaultChecked={selectedFacility.eldiven}
-            />
-          </Form.Group>
+                  <Form.Group controlId="location" className="mb-3">
+                    <Form.Label>Konum</Form.Label>
+                    <Form.Control
+                      name="location"
+                      type="text"
+                      defaultValue={selectedFacility.location}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="uniform">
-            <Form.Check
-              type="checkbox"
-              label="Forma"
-              defaultChecked={selectedFacility.uniform}
-            />
-          </Form.Group>
+                  <Form.Group controlId="addressDetails" className="mb-3">
+                    <Form.Label>Adres Detay</Form.Label>
+                    <Form.Control
+                      name="addressDetails"
+                      type="text"
+                      defaultValue={selectedFacility.addressDetails}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="cafe">
-            <Form.Check
-              type="checkbox"
-              label="Kafe"
-              defaultChecked={selectedFacility.cafe}
-            />
-          </Form.Group>
+                  <Form.Group controlId="totalFields" className="mb-3">
+                    <Form.Label>Saha Sayısı</Form.Label>
+                    <Form.Control
+                      name="totalFields"
+                      type="number"
+                      defaultValue={selectedFacility.totalFields}
+                    />
+                  </Form.Group>
+                </Col>
 
-          <Form.Group controlId="hotwater">
-            <Form.Check
-              type="checkbox"
-              label="Sıcak Su"
-              defaultChecked={selectedFacility.hotwater}
-            />
-          </Form.Group>
+                <Col>
+                  <Form.Group controlId="phone" className="mb-3">
+                    <Form.Label>Telefon</Form.Label>
+                    <Form.Control
+                      name="phone"
+                      type="text"
+                      defaultValue={selectedFacility.phone}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="shower">
-            <Form.Check
-              type="checkbox"
-              label="Duş"
-              defaultChecked={selectedFacility.shower}
-            />
-          </Form.Group>
+                  <Form.Group controlId="bankAccountInfo" className="mb-3">
+                    <Form.Label>Banka Hesap Bilgisi</Form.Label>
+                    <Form.Control
+                      name="bankAccountInfo"
+                      type="text"
+                      defaultValue={selectedFacility.bankAccountInfo || ""}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="toilet">
-            <Form.Check
-              type="checkbox"
-              label="Tuvalet"
-              defaultChecked={selectedFacility.toilet}
-            />
-          </Form.Group>
+                  <Form.Group controlId="transport" className="mb-2">
+                    <Form.Check
+                      name="transport"
+                      type="checkbox"
+                      label="Ulaşım"
+                      defaultChecked={selectedFacility.transport}
+                    />
+                  </Form.Group>
 
-          <Form.Group controlId="shoes">
-            <Form.Check
-              type="checkbox"
-              label="Ayakkabı"
-              defaultChecked={selectedFacility.shoes}
-            />
-          </Form.Group>
+                  <Form.Group controlId="eldiven" className="mb-2">
+                    <Form.Check
+                      name="eldiven"
+                      type="checkbox"
+                      label="Eldiven"
+                      defaultChecked={selectedFacility.eldiven}
+                    />
+                  </Form.Group>
 
-          <Button variant="primary" type="submit" className="mt-3">
-            Kaydet
-          </Button>
-        </Form>
-      </Modal.Body>
-    </Modal>
-)}
+                  <Form.Group controlId="uniform" className="mb-2">
+                    <Form.Check
+                      name="uniform"
+                      type="checkbox"
+                      label="Forma"
+                      defaultChecked={selectedFacility.uniform}
+                    />
+                  </Form.Group>
 
+                  <Form.Group controlId="hasCafeteria" className="mb-2">
+                    <Form.Check
+                      name="hasCafeteria"
+                      type="checkbox"
+                      label="Kafe"
+                      defaultChecked={selectedFacility.hasCafeteria}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="hotwater" className="mb-2">
+                    <Form.Check
+                      name="hotwater"
+                      type="checkbox"
+                      label="Sıcak Su"
+                      defaultChecked={selectedFacility.hotwater}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="hasShower" className="mb-2">
+                    <Form.Check
+                      name="hasShower"
+                      type="checkbox"
+                      label="Duş"
+                      defaultChecked={selectedFacility.hasShower}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="hasToilet" className="mb-2">
+                    <Form.Check
+                      name="hasToilet"
+                      type="checkbox"
+                      label="Tuvalet"
+                      defaultChecked={selectedFacility.hasToilet}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="shoes" className="mb-2">
+                    <Form.Check
+                      name="shoes"
+                      type="checkbox"
+                      label="Ayakkabı"
+                      defaultChecked={selectedFacility.shoes}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Button variant="primary" type="submit" className="mt-3">
+                Kaydet
+              </Button>
+            </Form>
+          </Modal.Body>
+        </Modal>
+      )}
     </>
   );
 }
