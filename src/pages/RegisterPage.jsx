@@ -16,6 +16,7 @@ export default function RegisterPage() {
         city: "",
         town: "",
         birthDate: "",
+        password:""
     })
 
     const [showPassword, setShowPassword] = useState(false)
@@ -70,7 +71,7 @@ export default function RegisterPage() {
                 formData.town,
                 formData.birthDate,
                 formData.password,
-                formData.role.Owner
+                //formData.role.Owner
             )
 
             // Kayıt başarılı, burada kullanıcıyı yönlendirebilirsiniz veya başka işlemler yapabilirsiniz
@@ -238,7 +239,7 @@ export default function RegisterPage() {
                         <Button variant="outline-secondary" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </Button>
-                        <Form.Control.Feedback type="invalid">Şifreniz en az 8 karakter olmalıdır.</Form.Control.Feedback>
+                        <Form.Control.Feedback type="invalid">Şifreniz en az 9 karakter olmalıdır.</Form.Control.Feedback>
                     </InputGroup>
                     </Form.Group>
                         </Col>

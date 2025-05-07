@@ -61,14 +61,13 @@ function FacilitiesPage() {
   const handleFacilitySubmit = async (e) => {
     e.preventDefault();
     const elems = e.target.elements;
-
+  
     const facilityData = {
-      ownerId: 1, // OwnerId'yı alıyoruz
+      ownerId: 1,
       name: elems.name.value,
       email: elems.email.value,
       location: elems.location.value,
       addressDetails: elems.addressDetails.value,
-      totalFields: Number(elems.totalFields.value),
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
       city: elems.city.value,
@@ -77,33 +76,34 @@ function FacilitiesPage() {
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
       hasToilet: elems.hasToilet.checked,
-      equipments: [], // Equipments verisi varsa, eklenir
-      // Fotoğraf varsa, facilityData'ya ekle
-      photoFiles: photoFile ? [photoFile] : [],
+      equipments: [],
     };
-
+  
     console.log("🔄 Adding facility", facilityData);
-
+  
     try {
-      // Facility verisini API'ye gönder
+      // 1. Önce yeni tesisi oluştur
       const newFacility = await createFacility(facilityData);
-
-      // Yeni eklenen tesisi listeye ekle
+  
+      // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
+      if (photoFile) {
+        const formData = new FormData();
+        formData.append("photo", photoFile);
+  
+        await uploadFacilityPhotos(newFacility.id, formData);
+        console.log("✅ Fotoğraf yüklendi.");
+      }
+  
+      // 3. Güncel listeyi çek
       await fetchFacilities();
-
-      // Mevcut tesisler listesine yeni eklenen tesisi ekleyebilirsiniz
-      setFacilities((prevFacilities) => [...prevFacilities, newFacility]);
-
-      // Modalı kapat
+  
+      // 4. Modalı kapat
       handleCloseModal();
     } catch (err) {
-      console.error(
-        "❌ Tesis ekleme başarısız:",
-        err.response?.data || err.message
-      );
+      console.error("❌ Tesis ekleme başarısız:", err.response?.data || err.message);
     }
   };
-
+  
   const handleFacilityUpdate = async (e) => {
     e.preventDefault();
     if (!selectedFacility) return;
@@ -115,20 +115,14 @@ function FacilitiesPage() {
       email: elems.email.value,
       location: elems.location.value,
       addressDetails: elems.addressDetails.value,
-      totalFields: Number(elems.totalFields.value),
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
       city: elems.city.value,
       town: elems.town.value,
       description: elems.description.value,
-      transport: elems.transport.checked,
-      uniform: elems.uniform.checked,
       hasCafeteria: elems.hasCafeteria.checked,
-      hotwater: elems.hotwater.checked,
       hasShower: elems.hasShower.checked,
       hasToilet: elems.hasToilet.checked,
-      shoes: elems.shoes.checked,
-      eldiven: elems.eldiven.checked,
       fields: [],
       equipments: [],
       photoUrls: selectedFacility.photoUrls || [], // güncel kalsın
@@ -184,14 +178,17 @@ function FacilitiesPage() {
     <>
       <h2 className="text-center my-4">Tesisler</h2>
 
-      <Row xs={1} className="justify-content-center text-center mt-5 mb-4 g-3" style={{ padding: 10 }}>
-  {facilities.map((f) => (
-    <Col key={f.id} className="d-flex flex-column align-items-center">
-      <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
-    </Col>
-  ))}
-</Row>
-
+      <Row
+        xs={1}
+        className="justify-content-center text-center mt-5 mb-4 g-3"
+        style={{ padding: 10 }}
+      >
+        {facilities.map((f) => (
+          <Col key={f.id} className="d-flex flex-column align-items-center">
+            <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
+          </Col>
+        ))}
+      </Row>
 
       {/* Silme ve Ekleme Butonları */}
       <div className="text-center mt-5 mb-4">
@@ -289,16 +286,6 @@ function FacilitiesPage() {
                       defaultValue={selectedFacility?.addressDetails || ""}
                     />
                   </Form.Group>
-
-                  <Form.Group controlId="totalFields" className="mb-3">
-                    <Form.Label>Saha Sayısı</Form.Label>
-                    <Form.Control
-                      name="totalFields"
-                      type="number"
-                      defaultValue={selectedFacility?.totalFields || 0}
-                      required
-                    />
-                  </Form.Group>
                 </Col>
 
                 <Col>
@@ -348,32 +335,6 @@ function FacilitiesPage() {
                   </Form.Group>
 
                   {/* Checkboxlar */}
-                  <Form.Group controlId="transport" className="mb-2">
-                    <Form.Check
-                      name="transport"
-                      type="checkbox"
-                      label="Ulaşım"
-                      defaultChecked={selectedFacility?.transport || false}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="eldiven" className="mb-2">
-                    <Form.Check
-                      name="eldiven"
-                      type="checkbox"
-                      label="Eldiven"
-                      defaultChecked={selectedFacility?.eldiven || false}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="uniform" className="mb-2">
-                    <Form.Check
-                      name="uniform"
-                      type="checkbox"
-                      label="Forma"
-                      defaultChecked={selectedFacility?.uniform || false}
-                    />
-                  </Form.Group>
 
                   <Form.Group controlId="hasCafeteria" className="mb-2">
                     <Form.Check
@@ -381,15 +342,6 @@ function FacilitiesPage() {
                       type="checkbox"
                       label="Kafeterya"
                       defaultChecked={selectedFacility?.hasCafeteria || false}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="hotwater" className="mb-2">
-                    <Form.Check
-                      name="hotwater"
-                      type="checkbox"
-                      label="Sıcak Su"
-                      defaultChecked={selectedFacility?.hotwater || false}
                     />
                   </Form.Group>
 
@@ -408,15 +360,6 @@ function FacilitiesPage() {
                       type="checkbox"
                       label="Tuvalet"
                       defaultChecked={selectedFacility?.hasToilet || false}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="shoes" className="mb-2">
-                    <Form.Check
-                      name="shoes"
-                      type="checkbox"
-                      label="Krampon"
-                      defaultChecked={selectedFacility?.shoes || false}
                     />
                   </Form.Group>
                 </Col>

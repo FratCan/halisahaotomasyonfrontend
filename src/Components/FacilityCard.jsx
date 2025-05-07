@@ -1,10 +1,6 @@
-
 import { Card, Button, Row, Col } from "react-bootstrap";
 
-
 const FacilityCard = ({ facility, onEdit }) => {
-
-
   return (
     <Card
       bg="light"
@@ -15,7 +11,11 @@ const FacilityCard = ({ facility, onEdit }) => {
           <Card.Img
             className="p-2"
             variant="top"
-            src={facility.photoUrls?.[0] ? `http://localhost:5021/${facility.photoUrls[0]}` : ""} // Fotoğraf yoksa default
+            src={
+              facility.photoUrls?.[0]
+                ? `http://localhost:5021/${facility.photoUrls[0]}`
+                : ""
+            }
             alt={facility.name}
             style={{
               height: "75%",
@@ -46,30 +46,10 @@ const FacilityCard = ({ facility, onEdit }) => {
               <strong>Banka Bilgisi:</strong> {facility.bankAccountInfo} <br />
               <strong>Konum:</strong> {facility.location} <br />
               <strong>Adres Detayı:</strong> {facility.addressDetails} <br />
-              <strong>Saha Sayısı:</strong> {facility.totalFields} <br />
-              <strong>Servis:</strong>{" "}
-              <span style={{ color: facility.transport ? "green" : "red" }}>
-                {facility.transport ? "Evet" : "Hayır"}
-              </span>
-              <br />
-              <strong>Forma:</strong>{" "}
-              <span style={{ color: facility.uniform ? "green" : "red" }}>
-                {facility.uniform ? "Evet" : "Hayır"}
-              </span>
-              <br />
-              <strong>Eldiven:</strong>{" "}
-              <span style={{ color: facility.eldiven ? "green" : "red" }}>
-                {facility.eldiven ? "Evet" : "Hayır"}
-              </span>
               <br />
               <strong>Kafe:</strong>{" "}
               <span style={{ color: facility.hasCafeteria ? "green" : "red" }}>
                 {facility.hasCafeteria ? "Evet" : "Hayır"}
-              </span>
-              <br />
-              <strong>Sıcak Su:</strong>{" "}
-              <span style={{ color: facility.hotwater ? "green" : "red" }}>
-                {facility.hotwater ? "Evet" : "Hayır"}
               </span>
               <br />
               <strong>Duş:</strong>{" "}
@@ -82,12 +62,7 @@ const FacilityCard = ({ facility, onEdit }) => {
                 {facility.hasToilet ? "Evet" : "Hayır"}
               </span>
               <br />
-              <strong>Ayakkabı:</strong>{" "}
-              <span style={{ color: facility.hasShoes ? "green" : "red" }}>
-                {facility.hasShoes ? "Evet" : "Hayır"}
-              </span>
             </Card.Text>
-
             <Button
               variant="primary"
               style={{ width: "100%" }}
