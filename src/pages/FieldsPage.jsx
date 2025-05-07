@@ -62,12 +62,13 @@
         width: 0,
         height: 0,
         capacity: 0,
-        hours: "08:00 - 09:00",
+        floorType:0,
+        hours: "",
         isIndoor: false,
         hasCamera: false,
         lightingAvailable: false,
         isAvailable: false,
-        allDays: [],
+        openingDays: [],
         photos: "",
         });
         // Gün seçimini sıfırla
@@ -117,7 +118,7 @@
         const updatedField = {
         ...selectedField,
         name: form.name.value,
-        hours: `${form.startHour.value} - ${form.endHour.value}`,
+        hours: `${form.startTime.value} - ${form.endTime.value}`,
         pricePerHour: Number(form.price.value),
         capacity: Number(form.capacity.value),
         width: Number(form.width.value),
@@ -126,9 +127,10 @@
         hasCamera: form.camera.checked,
         lightingAvailable: form.lighted.checked,
         isAvailable: formAvailable,
-        allDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
-        // Fotoğraf dosyası yerine dosya adı ya da URL gönderiliyor
+        openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
         photos: photoFile ? photoFile.name : selectedField.photos,
+        floorType: form.floorType.checked ? 1 : 0
+
         };
 
         try {
@@ -160,12 +162,12 @@
         hasCamera: form.camera.checked,
         lightingAvailable: form.lighted.checked,
         isAvailable: formAvailable,
-        allDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
+        openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
         // Eğer gerçek dosya upload etmiyorsanız:
         photos: photoFile ? photoFile.name : "",
 
         // enum değeri: Swagger’da 0…n arasında; örnek:
-        floorType: 0, // 0=Grass, 1=Artificial vs.
+        floorType: form.floorType.checked ? 1 : 0, // 0=Grass, 1=Artificial vs.
         };
 
         try {
@@ -358,7 +360,8 @@
                     <Form.Label>Başlangıç Saati</Form.Label>
                     <Form.Select
                     name="startHour"
-                    defaultValue={selectedField.hours.split(" - ")[0]}
+                    defaultValue={selectedField.startTime ? selectedField.startTime.split(" - ")[0] : "09:00"}
+
                     >
                     {hourOptions.map((h) => (
                         <option key={h} value={h}>
@@ -371,7 +374,7 @@
                     <Form.Label>Bitiş Saati</Form.Label>
                     <Form.Select
                     name="endHour"
-                    defaultValue={selectedField.hours.split(" - ")[1]}
+                    defaultValue={selectedField.endTime ? selectedField.endTime.split(" - ")[1] : "24:00"}
                     >
                     {hourOptions.map((h) => (
                         <option key={h} value={h}>
@@ -413,6 +416,18 @@
                         name="camera"
                         type="checkbox"
                         defaultChecked={selectedField.hasCamera}
+                    />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="floorType" className="mt-2">
+                    <Form.Label column sm={3}>
+                    Çim Tipi
+                    </Form.Label>
+                    <Col sm={9}>
+                    <Form.Check
+                        name="floorType"
+                        type="checkbox"
+                        defaultChecked={selectedField.floorType}
                     />
                     </Col>
                 </Form.Group>

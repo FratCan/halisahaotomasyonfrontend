@@ -4,10 +4,10 @@ import { Card, Button } from "react-bootstrap";
 
 function FieldCard({ field, onEdit, showEditButton = false }) {
   const isAvailable = field.available ?? field.isAvailable;
-  const price = field.pricePerHour ?? field.price;
-  const lighted = field.lighted ?? field.lightingAvailable;
+  //const price = field.pricePerHour ?? field.price;
+  //const lighted = field.lighted ?? field.lightingAvailable;
 
-  const baseImageUrl = "http://localhost:3000/Facilities/"; // 💡 Buraya kendi backend URL'ini yazabilirsin
+  const baseImageUrl = "http://localhost:5021/api/facilities/fields/"; // 💡 Buraya kendi backend URL'ini yazabilirsin
   let imgSrc = "";
 
   if (Array.isArray(field.photos)) {
@@ -50,12 +50,12 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
           style={{ height: "200px", objectFit: "cover", marginBottom: "10px" }}
         />
 
-        {/* SAAT ve AYDINLATMA */}
         <Card.Text className="fs-4 p-3">
-          ⏰ {field.hours}
+          ⏰ {field.startTime?.slice(0, 5)} - {field.endTime?.slice(0, 5)}
           <br />
-          {lighted ? "💡 Lighted" : "🌑 Not lighted"}
+          {field.lightingAvailable ? "💡 Lighted" : "🌑 Not lighted"}
         </Card.Text>
+
 
         {/* YENİ EKLENEN ALANLAR */}
         <Card.Text className="fs-6">
@@ -69,12 +69,12 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
           <br />
           <strong>Floor Type:</strong> {field.floorType}
           <br />
-          <strong>All Days:</strong> {(field.allDays || []).join(", ")}
+          <strong>All Days:</strong> {(field.openingDays || []).join(", ")}
         </Card.Text>
 
         {/* FİYAT ve DURUM */}
         <Card.Text className="text-center fs-5">
-          <strong>${price}/hour</strong>
+          <strong>${field.pricePerHour}/hour</strong>
           <span
             className="ms-5"
             style={{ color: isAvailable ? "green" : "red" }}

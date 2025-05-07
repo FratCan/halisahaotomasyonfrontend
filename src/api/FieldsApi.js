@@ -1,7 +1,7 @@
 // src/api/fieldsApi.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5021/api/Fields';
+const API_URL = 'http://localhost:5021/api/facilities/fields';
 
 export const getFields = async () => {
   const { data } = await axios.get(API_URL);

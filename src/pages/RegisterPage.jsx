@@ -58,7 +58,7 @@ export default function RegisterPage() {
         }
         setValidated(true)
         setError("")
-
+        
         try {
             // Register işlemi
             const response = await registerApp(
@@ -69,7 +69,8 @@ export default function RegisterPage() {
                 formData.city,
                 formData.town,
                 formData.birthDate,
-                formData.password
+                formData.password,
+                formData.role.Owner
             )
 
             // Kayıt başarılı, burada kullanıcıyı yönlendirebilirsiniz veya başka işlemler yapabilirsiniz

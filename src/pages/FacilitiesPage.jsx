@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Modal, Form, Button } from "react-bootstrap";
-import { getFacilities, updateFacility } from "../api/FacilityApi";
+import {
+  getFacilities,
+  updateFacility,
+  deleteFacility,
+  createFacility,
+  uploadFacilityPhotos,
+} from "../api/FacilityApi";
 import FacilityCard from "../Components/FacilityCard";
 
 function FacilitiesPage() {
@@ -9,6 +15,9 @@ function FacilitiesPage() {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [facilityNameToDelete, setFacilityNameToDelete] = useState("");
 
   useEffect(() => {
     fetchFacilities();
@@ -19,14 +28,25 @@ function FacilitiesPage() {
       const data = await getFacilities();
       setFacilities(data);
     } catch (err) {
-      console.error("Facilities çekilemedi:", err);
+      console.error("Facility çekilemedi:", err);
     }
   };
 
   const handleEditClick = (id) => {
     const fresh = facilities.find((f) => f.id === id);
     setSelectedFacility(fresh);
-    setPhotoPreview(fresh.photos || "");
+    setPhotoPreview(
+      fresh.photoUrls?.[0] ? `http://localhost:5021/${fresh.photoUrls[0]}` : ""
+    );
+
+    setIsCreating(false);
+    setShowModal(true);
+  };
+
+  const handleCreateClick = () => {
+    setSelectedFacility(null);
+    setIsCreating(true);
+    setPhotoPreview("");
     setShowModal(true);
   };
 
@@ -35,63 +55,174 @@ function FacilitiesPage() {
     setSelectedFacility(null);
     setPhotoFile(null);
     setPhotoPreview("");
+    setIsCreating(false);
+  };
+
+  const handleFacilitySubmit = async (e) => {
+    e.preventDefault();
+    const elems = e.target.elements;
+
+    const facilityData = {
+      ownerId: 1, // OwnerId'yı alıyoruz
+      name: elems.name.value,
+      email: elems.email.value,
+      location: elems.location.value,
+      addressDetails: elems.addressDetails.value,
+      totalFields: Number(elems.totalFields.value),
+      phone: elems.phone.value,
+      bankAccountInfo: elems.bankAccountInfo.value,
+      city: elems.city.value,
+      town: elems.town.value,
+      description: elems.description.value,
+      hasCafeteria: elems.hasCafeteria.checked,
+      hasShower: elems.hasShower.checked,
+      hasToilet: elems.hasToilet.checked,
+      equipments: [], // Equipments verisi varsa, eklenir
+      // Fotoğraf varsa, facilityData'ya ekle
+      photoFiles: photoFile ? [photoFile] : [],
+    };
+
+    console.log("🔄 Adding facility", facilityData);
+
+    try {
+      // Facility verisini API'ye gönder
+      const newFacility = await createFacility(facilityData);
+
+      // Yeni eklenen tesisi listeye ekle
+      await fetchFacilities();
+
+      // Mevcut tesisler listesine yeni eklenen tesisi ekleyebilirsiniz
+      setFacilities((prevFacilities) => [...prevFacilities, newFacility]);
+
+      // Modalı kapat
+      handleCloseModal();
+    } catch (err) {
+      console.error(
+        "❌ Tesis ekleme başarısız:",
+        err.response?.data || err.message
+      );
+    }
   };
 
   const handleFacilityUpdate = async (e) => {
     e.preventDefault();
     if (!selectedFacility) return;
-  
+
     const elems = e.target.elements;
+
     const updatedData = {
-      name:           elems.name.value,
-      email:          elems.email.value,
-      location:       elems.location.value,
+      name: elems.name.value,
+      email: elems.email.value,
+      location: elems.location.value,
       addressDetails: elems.addressDetails.value,
-      totalFields:    Number(elems.totalFields.value),
-      phone:          elems.phone.value,
+      totalFields: Number(elems.totalFields.value),
+      phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
-      transport:      elems.transport.checked,
-      uniform:        elems.uniform.checked,
-      hasCafeteria:   elems.hasCafeteria.checked,
-      hotwater:       elems.hotwater.checked,
-      hasShower:      elems.hasShower.checked,
-      hasToilet:      elems.hasToilet.checked,
-      shoes:          elems.shoes.checked,
-      eldiven:        elems.eldiven.checked,
-      // photos: skip for now
+      city: elems.city.value,
+      town: elems.town.value,
+      description: elems.description.value,
+      transport: elems.transport.checked,
+      uniform: elems.uniform.checked,
+      hasCafeteria: elems.hasCafeteria.checked,
+      hotwater: elems.hotwater.checked,
+      hasShower: elems.hasShower.checked,
+      hasToilet: elems.hasToilet.checked,
+      shoes: elems.shoes.checked,
+      eldiven: elems.eldiven.checked,
+      fields: [],
+      equipments: [],
+      photoUrls: selectedFacility.photoUrls || [], // güncel kalsın
     };
-  
+
     console.log("🔄 Updating facility", selectedFacility.id, updatedData);
-  
+
     try {
-      const result = await updateFacility(selectedFacility.id, updatedData);
-      console.log("✅ API returned:", result);
-      await fetchFacilities();      // reload list
+      // 1. Fotoğraf var mı kontrol et
+      if (photoFile) {
+        const photoFormData = new FormData();
+        photoFormData.append("photo", photoFile);
+
+        // uploadFacilityPhotos fonksiyonuyla sadece fotoğrafı yükle
+        await uploadFacilityPhotos(selectedFacility.id, photoFormData);
+        console.log("✅ Fotoğraf yüklendi.");
+      }
+
+      // 2. Diğer alanları update et
+      await updateFacility(selectedFacility.id, updatedData);
+      console.log("✅ Tesis bilgileri güncellendi.");
+
+      await fetchFacilities();
       handleCloseModal();
     } catch (err) {
       console.error("❌ Update failed:", err.response?.data || err.message);
     }
   };
-  
+
+  const handleOpenDeleteModal = () => {
+    setFacilityNameToDelete("");
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    const facilityToDelete = facilities.find(
+      (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
+    );
+    if (!facilityToDelete) {
+      alert("Bu isimde bir tesis bulunamadı!");
+      return;
+    }
+    try {
+      await deleteFacility(facilityToDelete.id);
+      await fetchFacilities();
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error("❌ Silme başarısız:", err.response?.data || err.message);
+    }
+  };
 
   return (
     <>
-      <h2 className="text-center my-4">Tesis</h2>
-      <Row xs={1} md={2} className="g-5 justify-content-center" style={{ padding: 10 }}>
-        {facilities.map((f) => (
-          <Col key={f.id} className="d-flex justify-content-center">
-            <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
-          </Col>
-        ))}
-      </Row>
+      <h2 className="text-center my-4">Tesisler</h2>
 
-      {showModal && selectedFacility && (
-        <Modal show onHide={handleCloseModal} size="lg">
+      <Row xs={1} className="justify-content-center text-center mt-5 mb-4 g-3" style={{ padding: 10 }}>
+  {facilities.map((f) => (
+    <Col key={f.id} className="d-flex flex-column align-items-center">
+      <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
+    </Col>
+  ))}
+</Row>
+
+
+      {/* Silme ve Ekleme Butonları */}
+      <div className="text-center mt-5 mb-4">
+        <Button
+          variant="danger"
+          className="me-3"
+          onClick={handleOpenDeleteModal}
+        >
+          Tesis Sil
+        </Button>
+        <Button variant="success" onClick={handleCreateClick}>
+          Yeni Tesis Ekle
+        </Button>
+      </div>
+
+      {/* Tesis Ekleme/Düzenleme Modal */}
+      {showModal && (
+        <Modal show={showModal} onHide={handleCloseModal} size="lg">
           <Modal.Header closeButton>
-            <Modal.Title>Tesis Düzenle: {selectedFacility.name}</Modal.Title>
+            <Modal.Title>
+              {isCreating
+                ? "Yeni Tesis Ekle"
+                : `Tesis Düzenle: ${selectedFacility?.name}`}
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Form onSubmit={handleFacilityUpdate}>
+            <Form
+              onSubmit={
+                isCreating ? handleFacilitySubmit : handleFacilityUpdate
+              }
+            >
               <Row>
                 <Col>
                   <Form.Group controlId="photos" className="mb-3">
@@ -100,7 +231,12 @@ function FacilitiesPage() {
                       <img
                         src={photoPreview}
                         alt="Saha"
-                        style={{ width: "100%", marginBottom: 10 }}
+                        style={{
+                          width: "100%",
+                          maxHeight: "300px",
+                          objectFit: "cover",
+                        }}
+                        className="mb-3"
                       />
                     )}
                     <Form.Control
@@ -122,7 +258,8 @@ function FacilitiesPage() {
                     <Form.Control
                       name="name"
                       type="text"
-                      defaultValue={selectedFacility.name}
+                      defaultValue={selectedFacility?.name || ""}
+                      required
                     />
                   </Form.Group>
 
@@ -131,7 +268,7 @@ function FacilitiesPage() {
                     <Form.Control
                       name="email"
                       type="email"
-                      defaultValue={selectedFacility.email || ""}
+                      defaultValue={selectedFacility?.email || ""}
                     />
                   </Form.Group>
 
@@ -140,7 +277,7 @@ function FacilitiesPage() {
                     <Form.Control
                       name="location"
                       type="text"
-                      defaultValue={selectedFacility.location}
+                      defaultValue={selectedFacility?.location || ""}
                     />
                   </Form.Group>
 
@@ -149,7 +286,7 @@ function FacilitiesPage() {
                     <Form.Control
                       name="addressDetails"
                       type="text"
-                      defaultValue={selectedFacility.addressDetails}
+                      defaultValue={selectedFacility?.addressDetails || ""}
                     />
                   </Form.Group>
 
@@ -158,7 +295,8 @@ function FacilitiesPage() {
                     <Form.Control
                       name="totalFields"
                       type="number"
-                      defaultValue={selectedFacility.totalFields}
+                      defaultValue={selectedFacility?.totalFields || 0}
+                      required
                     />
                   </Form.Group>
                 </Col>
@@ -169,7 +307,7 @@ function FacilitiesPage() {
                     <Form.Control
                       name="phone"
                       type="text"
-                      defaultValue={selectedFacility.phone}
+                      defaultValue={selectedFacility?.phone || ""}
                     />
                   </Form.Group>
 
@@ -178,16 +316,44 @@ function FacilitiesPage() {
                     <Form.Control
                       name="bankAccountInfo"
                       type="text"
-                      defaultValue={selectedFacility.bankAccountInfo || ""}
+                      defaultValue={selectedFacility?.bankAccountInfo || ""}
                     />
                   </Form.Group>
 
+                  <Form.Group controlId="city" className="mb-3">
+                    <Form.Label>Şehir</Form.Label>
+                    <Form.Control
+                      name="city"
+                      type="text"
+                      defaultValue={selectedFacility?.city || ""}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="town" className="mb-3">
+                    <Form.Label>İlçe</Form.Label>
+                    <Form.Control
+                      name="town"
+                      type="text"
+                      defaultValue={selectedFacility?.town || ""}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="description" className="mb-3">
+                    <Form.Label>Açıklama</Form.Label>
+                    <Form.Control
+                      name="description"
+                      type="text"
+                      defaultValue={selectedFacility?.description || ""}
+                    />
+                  </Form.Group>
+
+                  {/* Checkboxlar */}
                   <Form.Group controlId="transport" className="mb-2">
                     <Form.Check
                       name="transport"
                       type="checkbox"
                       label="Ulaşım"
-                      defaultChecked={selectedFacility.transport}
+                      defaultChecked={selectedFacility?.transport || false}
                     />
                   </Form.Group>
 
@@ -196,7 +362,7 @@ function FacilitiesPage() {
                       name="eldiven"
                       type="checkbox"
                       label="Eldiven"
-                      defaultChecked={selectedFacility.eldiven}
+                      defaultChecked={selectedFacility?.eldiven || false}
                     />
                   </Form.Group>
 
@@ -205,7 +371,7 @@ function FacilitiesPage() {
                       name="uniform"
                       type="checkbox"
                       label="Forma"
-                      defaultChecked={selectedFacility.uniform}
+                      defaultChecked={selectedFacility?.uniform || false}
                     />
                   </Form.Group>
 
@@ -213,8 +379,8 @@ function FacilitiesPage() {
                     <Form.Check
                       name="hasCafeteria"
                       type="checkbox"
-                      label="Kafe"
-                      defaultChecked={selectedFacility.hasCafeteria}
+                      label="Kafeterya"
+                      defaultChecked={selectedFacility?.hasCafeteria || false}
                     />
                   </Form.Group>
 
@@ -223,7 +389,7 @@ function FacilitiesPage() {
                       name="hotwater"
                       type="checkbox"
                       label="Sıcak Su"
-                      defaultChecked={selectedFacility.hotwater}
+                      defaultChecked={selectedFacility?.hotwater || false}
                     />
                   </Form.Group>
 
@@ -232,7 +398,7 @@ function FacilitiesPage() {
                       name="hasShower"
                       type="checkbox"
                       label="Duş"
-                      defaultChecked={selectedFacility.hasShower}
+                      defaultChecked={selectedFacility?.hasShower || false}
                     />
                   </Form.Group>
 
@@ -241,7 +407,7 @@ function FacilitiesPage() {
                       name="hasToilet"
                       type="checkbox"
                       label="Tuvalet"
-                      defaultChecked={selectedFacility.hasToilet}
+                      defaultChecked={selectedFacility?.hasToilet || false}
                     />
                   </Form.Group>
 
@@ -249,20 +415,50 @@ function FacilitiesPage() {
                     <Form.Check
                       name="shoes"
                       type="checkbox"
-                      label="Ayakkabı"
-                      defaultChecked={selectedFacility.shoes}
+                      label="Krampon"
+                      defaultChecked={selectedFacility?.shoes || false}
                     />
                   </Form.Group>
                 </Col>
               </Row>
 
-              <Button variant="primary" type="submit" className="mt-3">
-                Kaydet
-              </Button>
+              <div className="text-center mt-4">
+                <Button variant="primary" type="submit">
+                  {isCreating ? "Kaydet" : "Güncelle"}
+                </Button>
+              </div>
             </Form>
           </Modal.Body>
         </Modal>
       )}
+
+      {/* Tesis Silme Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Tesis Sil</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Silinecek tesisin adını yazın:</Form.Label>
+              <Form.Control
+                type="text"
+                value={facilityNameToDelete}
+                onChange={(e) => setFacilityNameToDelete(e.target.value)}
+                placeholder="Örn: Arena Halı Saha"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Vazgeç
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete}>
+            Sil
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
