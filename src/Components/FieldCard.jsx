@@ -2,21 +2,8 @@
 import React from "react";
 import { Card, Button } from "react-bootstrap";
 
-function FieldCard({ field, onEdit, showEditButton = false }) {
+function FieldCard({ field, onEdit,showEditButton}) {
   const isAvailable = field.available ?? field.isAvailable;
-  //const price = field.pricePerHour ?? field.price;
-  //const lighted = field.lighted ?? field.lightingAvailable;
-
-  const baseImageUrl = "http://localhost:5021/api/facilities/fields/"; // 💡 Buraya kendi backend URL'ini yazabilirsin
-  let imgSrc = "";
-
-  if (Array.isArray(field.photos)) {
-    imgSrc = field.photos.length > 0 ? baseImageUrl + field.photos[0] : null;
-  } else if (typeof field.photos === "string" && field.photos !== "") {
-    imgSrc = baseImageUrl + field.photos;
-  } else {
-    imgSrc = "https://via.placeholder.com/300x200?text=No+Image"; // Fotoğraf yoksa default resim
-  }
 
   return (
     <Card
@@ -45,7 +32,9 @@ function FieldCard({ field, onEdit, showEditButton = false }) {
         {/* FOTO */}
         <Card.Img
           variant="top"
-          src={imgSrc}
+          src={field.photoUrls?.[0]
+            ? `http://localhost:5021/${field.photoUrls[0]}`
+            : ""}
           alt={field.name}
           style={{ height: "200px", objectFit: "cover", marginBottom: "10px" }}
         />

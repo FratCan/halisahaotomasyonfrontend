@@ -1,12 +1,5 @@
     import React, { useState, useEffect } from "react";
-    import {
-    Container,
-    Row,
-    Col,
-    Modal,
-    Button,
-    ListGroup,
-    } from "react-bootstrap";
+    import { Container, Row, Col, Modal, Button, ListGroup } from "react-bootstrap";
     import FieldCard from "../Components/FieldCard";
     import Calendar from "../Components/Calendar";
     import ReservationFilter from "../Components/ReservationFilter";
@@ -37,7 +30,13 @@
     // 3. Parse working hours
     const [startHour, endHour] = selectedField.hours
         ? selectedField.hours.split(" - ").map((t) => parseInt(t.split(":")[0], 10))
+        : selectedField.startTime && selectedField.endTime
+        ? [
+            parseInt(selectedField.startTime.split(":")[0], 10),
+            parseInt(selectedField.endTime.split(":")[0], 10),
+        ]
         : [9, 21];
+
     const hoursRange = Array.from(
         { length: endHour - startHour },
         (_, i) => startHour + i
@@ -58,11 +57,15 @@
 
     // 5. Availability check
     const isAvailable = (day, hour) => {
-        const dayName = day.toLocaleDateString("en-US", { weekday: "long" });
+        const dayName = day.toLocaleDateString("tr-TR", { weekday: "long" });
+        console.log("workingDays:", selectedField.workingDays);  // <-- Bu satırı ekleyelim
+        console.log("Day:", dayName);
         const h = parseInt(hour, 10);
         if (!selectedField.workingDays?.includes(dayName)) return false;
         return h >= startHour && h < endHour;
     };
+    
+    
 
     // 6. Slot handlers
     const handleSlotClick = (slot) => setSelectedSlot(slot);
@@ -77,18 +80,23 @@
     }
 
     return (
-        <Container fluid className="d-flex justify-content-center align-items-center">
+        <Container
+        fluid
+        className="d-flex justify-content-center align-items-center"
+        >
         <Row className="w-100 my-4">
             {/* Left: FieldCard */}
             <Col md={3} className="d-flex justify-content-center">
-            <div style={{
+            <div
+                style={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 height: "95vh",
                 width: "100%",
-            }}>
-                <FieldCard field={selectedField} />
+                }}
+            >
+                <FieldCard field={selectedField} showEditButton={false} />
             </div>
             </Col>
 
@@ -121,8 +129,11 @@
                 currentDate={currentDate}
                 setCurrentDate={setCurrentDate}
                 weekDays={weekDays}
+                openingDays={selectedField.openingDays}
                 handleSlotClick={handleSlotClick}
                 hoursRange={hoursRange}
+                startHour={startHour}
+                endHour={endHour}
                 isAvailable={isAvailable}
             />
             </Col>

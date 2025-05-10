@@ -23,7 +23,7 @@ export async function updateFacility(id, facilityData) {
   return data;
 }
 
- 
+
 export const createFacility = async (facilityData) => {
   const formData = new FormData();
 
@@ -39,7 +39,7 @@ export const createFacility = async (facilityData) => {
   }
 
   try {
-    const { data } = await axios.post('http://localhost:5021/api/Facilities', formData, {
+    const { data } = await axios.post(API_URL, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -77,3 +77,5 @@ export const deleteFacility = async (id) => {
       throw error;
     }
   };
+
+

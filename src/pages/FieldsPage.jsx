@@ -14,6 +14,7 @@
     updateField,
     createField,
     deleteField,
+    uploadFieldPhotos,
     } from "../api/FieldsApi";
 
     // Haftanın günlerini sabit tutuyoruz
@@ -39,6 +40,7 @@
     const [photoPreview, setPhotoPreview] = useState("");
     const [formAvailable, setFormAvailable] = useState(false);
     const [isCreateMode, setIsCreateMode] = useState(false);
+    const [fieldNameToDelete, setFieldNameToDelete] = useState("");
 
     // Sayfa yüklendiğinde verileri çek
     useEffect(() => {
@@ -54,6 +56,27 @@
         }
     };
 
+    // Düzenle butonuna tıklayınca
+    const handleEditClick = (id) => {
+        const fresh = fields.find((f) => f.id === id);
+        setSelectedField(fresh);
+        setPhotoPreview(
+        fresh.photoUrls?.[0] ? `http://localhost:5021/${fresh.photoUrls[0]}` : ""
+        );
+
+        const newDaysAvailable = WEEK_DAYS.reduce(
+            (acc, day) => ({
+              ...acc,
+              [day]: fresh.openingDays.includes(day),
+            }),
+            {}
+          );
+          setDaysAvailable(newDaysAvailable);
+          setFormAvailable(fresh.isAvailable);
+        setIsCreateMode(false);
+        setShowModal(true);
+    };
+
     // "+" kartına tıklayınca
     const handleCreateClick = () => {
         // Yeni, boş bir saha objesi
@@ -62,7 +85,7 @@
         width: 0,
         height: 0,
         capacity: 0,
-        floorType:0,
+        floorType: 0,
         hours: "",
         isIndoor: false,
         hasCamera: false,
@@ -82,15 +105,6 @@
         setIsCreateMode(true);
         setShowModal(true);
     };
-
-    // Düzenle butonuna tıklayınca
-    const handleEditClick = (id) => {
-        const fresh = fields.find((f) => f.id === id);
-        setSelectedField(fresh);
-        setIsCreateMode(false);
-        setShowModal(true);
-    };
-
     // Modal kapatma
     const handleCloseModal = () => {
         setShowModal(false);
@@ -99,7 +113,10 @@
         setPhotoPreview("");
         setIsCreateMode(false);
     };
-
+    const handleOpenDeleteModal = () => {
+        setFieldNameToDelete("");
+        setShowDeleteModal(true);
+    };
     // Gün toggle
     const toggleDay = (day) => {
         setDaysAvailable((prev) => ({ ...prev, [day]: !prev[day] }));
@@ -107,53 +124,19 @@
 
     // Saat seçenekleri
     const hourOptions = Array.from(
-        { length: 15 },
+        { length: 17 },
         (_, i) => `${(8 + i).toString().padStart(2, "0")}:00`
     );
-
-    // Var olan saha güncelleme
-    const handleFieldUpdate = async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const updatedField = {
-        ...selectedField,
-        name: form.name.value,
-        hours: `${form.startTime.value} - ${form.endTime.value}`,
-        pricePerHour: Number(form.price.value),
-        capacity: Number(form.capacity.value),
-        width: Number(form.width.value),
-        height: Number(form.height.value),
-        isIndoor: form.indoor.checked,
-        hasCamera: form.camera.checked,
-        lightingAvailable: form.lighted.checked,
-        isAvailable: formAvailable,
-        openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
-        photos: photoFile ? photoFile.name : selectedField.photos,
-        floorType: form.floorType.checked ? 1 : 0
-
-        };
-
-        try {
-        await updateField(updatedField);
-        await fetchFields();
-        handleCloseModal();
-        } catch (err) {
-        console.error("Güncelleme hatası:", err);
-        }
-    };
-
     // Yeni saha oluşturma
     const handleFieldCreate = async (e) => {
         e.preventDefault();
 
         const form = e.target;
-
-        // facilityId değişkenini projenize göre belirleyin:
-        const facilityId = 1; // veya props’dan, context’ten geldiği değer
-        const newField = {
-        facilityId,
+        const data = {
+        facilityId: 1,
         name: form.name.value,
-        hours: `${form.startHour.value} - ${form.endHour.value}`,
+        startTime: `${form.StartTime.value}`,
+        endTime: `${form.EndTime.value}`,
         pricePerHour: Number(form.price.value),
         capacity: Number(form.capacity.value),
         width: Number(form.width.value),
@@ -163,44 +146,103 @@
         lightingAvailable: form.lighted.checked,
         isAvailable: formAvailable,
         openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
-        // Eğer gerçek dosya upload etmiyorsanız:
         photos: photoFile ? photoFile.name : "",
-
-        // enum değeri: Swagger’da 0…n arasında; örnek:
-        floorType: form.floorType.checked ? 1 : 0, // 0=Grass, 1=Artificial vs.
+        floorType: form.floorType.checked ? 1 : 0,
         };
 
+        console.log("🔄 Adding fields", data);
+
         try {
-        await createField(newField);
+        // 1. Önce yeni tesisi oluştur
+        const newField = await createField(data);
+
+        // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
+        if (photoFile) {
+            const formData = new FormData();
+            formData.append("photo", photoFile);
+
+            await uploadFieldPhotos(newField.id, formData);
+            console.log("✅ Fotoğraf yüklendi.");
+        }
+
+        // 3. Güncel listeyi çek
         await fetchFields();
+
+        // 4. Modalı kapat
         handleCloseModal();
         } catch (err) {
         console.error(
-            "Oluşturma hatası:",
-            err.response?.status,
-            err.response?.data
+            "❌ Saha ekleme başarısız:",
+            err.response?.data || err.message
         );
         }
     };
+
+    // Var olan saha güncelleme
+    const handleFieldUpdate = async (e) => {
+        e.preventDefault();
+        if (!selectedField) return;
+        const form = e.target.elements;
+        const updatedData = {
+        name: form.name.value,
+        startTime: `${form.StartTime.value}`,
+        endTime: `${form.EndTime.value}`,
+        pricePerHour: Number(form.price.value),
+        capacity: Number(form.capacity.value),
+        width: Number(form.width.value),
+        height: Number(form.height.value),
+        isIndoor: form.indoor.checked,
+        hasCamera: form.camera.checked,
+        lightingAvailable: form.lighted.checked,
+        isAvailable: formAvailable,
+        openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
+        photoUrls: selectedField.photoUrls || [],
+        floorType: form.floorType.checked ? 1 : 0,
+        };
+
+        console.log("🔄 Updating field", selectedField.id, updatedData);
+
+        try {
+        // 1. Fotoğraf var mı kontrol et
+        if (photoFile) {
+            const photoFormData = new FormData();
+            photoFormData.append("photo", photoFile);
+
+            // uploadFacilityPhotos fonksiyonuyla sadece fotoğrafı yükle
+            await uploadFieldPhotos(selectedField.id, photoFormData);
+            console.log("✅ Fotoğraf yüklendi.");
+        }
+
+        // 2. Diğer alanları update et
+        await updateField(selectedField.id, updatedData);
+        console.log("✅ Saha bilgileri güncellendi.");
+
+        await fetchFields();
+        handleCloseModal();
+        } catch (err) {
+        console.error("❌ Update failed:", err.response?.data || err.message);
+        }
+    };
+
     //Saha silme
     const handleFieldDelete = async (e) => {
         e.preventDefault();
-        const f = fields.find(
-        (f) => f.name.trim().toLowerCase() === deleteName.trim().toLowerCase()
+        const fieldsToDelete = fields.find(
+        (f) => f.name.toLowerCase() === fieldNameToDelete.trim().toLowerCase()
         );
-        if (!f) {
-        setDeleteError("Bu isimde bir saha bulunamadı.");
+        if (!fieldsToDelete) {
+        alert("Bu isimde bir tesis bulunamadı!");
         return;
         }
         try {
-        await deleteField(f.id);
+        await deleteField(fieldsToDelete.id);
         await fetchFields();
         setShowDeleteModal(false);
         } catch (err) {
-        console.error("Silme hatası:", err.response?.status, err.response?.data);
-        setDeleteError("Silme başarısız oldu.");
+        console.error("❌ Silme başarısız:", err.response?.data || err.message);
         }
     };
+
     return (
         <>
         <Container style={{ padding: 10 }}>
@@ -227,55 +269,24 @@
         </Container>
 
         <Row className="mb-4 justify-content-center">
-            {/* Oluşturma Kartı */}
-            <Col md={4} className="d-flex justify-content-center mb-4">
-            <Card
-                bg="success"
-                text="white"
-                style={{
-                width: "100%",
-                height: "200px",
-                cursor: "pointer",
-                opacity: 0.7,
-                }}
-                className="d-flex align-items-center justify-content-center"
-                onClick={handleCreateClick}
+            {/* Silme ve Ekleme Butonları */}
+            <div className="text-center mt-5 mb-4">
+            <Button
+                variant="danger"
+                className="me-3"
+                onClick={handleOpenDeleteModal}
+                type="button"
             >
-                <Card.Body>
-                <h1 className="text-center">+</h1>
-                <div className="text-center">Saha Ekle</div>
-                </Card.Body>
-            </Card>
-            </Col>
-
-            {/* Silme Kartı */}
-            <Col md={4} className="d-flex justify-content-center mb-4">
-            <Card
-                bg="danger"
-                text="white"
-                style={{
-                width: "100%",
-                height: "200px",
-                cursor: "pointer",
-                opacity: 0.8,
-                }}
-                className="d-flex align-items-center justify-content-center"
-                onClick={() => {
-                setDeleteName("");
-                setDeleteError("");
-                setShowDeleteModal(true);
-                }}
-            >
-                <Card.Body>
-                <h1 className="text-center">−</h1>
-                <div className="text-center">Saha Sil</div>
-                </Card.Body>
-            </Card>
-            </Col>
+                Saha Sil
+            </Button>
+            <Button variant="success" onClick={handleCreateClick} type="button">
+                Yeni Saha Ekle
+            </Button>
+            </div>
         </Row>
 
         {/* Ekleme / Düzenleme Modalı */}
-        {showModal && selectedField && (
+        {showModal && (
             <Modal show onHide={handleCloseModal}>
             <Modal.Header closeButton>
                 <Modal.Title>
@@ -288,13 +299,18 @@
             <Form onSubmit={isCreateMode ? handleFieldCreate : handleFieldUpdate}>
                 <Modal.Body>
                 {/* Fotoğraf */}
-                <Form.Group controlId="photos">
+                <Form.Group controlId="photos" className="mb-3">
                     <Form.Label>Fotoğraf</Form.Label>
                     {photoPreview && (
                     <img
                         src={photoPreview}
                         alt="Saha"
-                        style={{ width: "100%", marginBottom: 10 }}
+                        style={{
+                        width: "100%",
+                        maxHeight: "300px",
+                        objectFit: "cover",
+                        }}
+                        className="mb-3"
                     />
                     )}
                     <Form.Control
@@ -356,34 +372,29 @@
                 </Row>
 
                 {/* Saatler */}
-                <Form.Group controlId="startHour" className="mt-2">
+                {/* Başlangıç Saati */}
+                    <Form.Group controlId="StartTime" className="mt-2">
                     <Form.Label>Başlangıç Saati</Form.Label>
-                    <Form.Select
-                    name="startHour"
-                    defaultValue={selectedField.startTime ? selectedField.startTime.split(" - ")[0] : "09:00"}
-
-                    >
-                    {hourOptions.map((h) => (
-                        <option key={h} value={h}>
-                        {h}
+                    <Form.Select name="StartTime" defaultValue={selectedField.StartTime || "08:00"}>
+                        {hourOptions.map((hour) => (
+                        <option key={hour} value={hour}>
+                            {hour}
                         </option>
-                    ))}
+                        ))}
                     </Form.Select>
-                </Form.Group>
-                <Form.Group controlId="endHour" className="mt-2">
+                    </Form.Group>
+
+                    {/* Bitiş Saati */}
+                    <Form.Group controlId="EndTime" className="mt-2">
                     <Form.Label>Bitiş Saati</Form.Label>
-                    <Form.Select
-                    name="endHour"
-                    defaultValue={selectedField.endTime ? selectedField.endTime.split(" - ")[1] : "24:00"}
-                    >
-                    {hourOptions.map((h) => (
-                        <option key={h} value={h}>
-                        {h}
+                    <Form.Select name="EndTime" defaultValue={selectedField.EndTime || "23:00"}>
+                        {hourOptions.map((hour) => (
+                        <option key={hour} value={hour}>
+                            {hour}
                         </option>
-                    ))}
+                        ))}
                     </Form.Select>
-                </Form.Group>
-
+                    </Form.Group>
                 {/* Fiyat */}
                 <Form.Group controlId="price" className="mt-2">
                     <Form.Label>Fiyat</Form.Label>
@@ -493,39 +504,46 @@
             </Modal>
         )}
 
-        <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-            <Form onSubmit={handleFieldDelete}>
-            <Modal.Header closeButton>
-                <Modal.Title>Saha Sil</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form.Group controlId="deleteName">
-                <Form.Label>Silinecek Saha Adı</Form.Label>
-                <Form.Control
-                    type="text"
-                    value={deleteName}
-                    onChange={(e) => setDeleteName(e.target.value)}
-                    placeholder="Saha adını girin"
-                    required
-                />
-                </Form.Group>
-                {deleteError && (
-                <div className="text-danger mt-2">{deleteError}</div>
-                )}
-            </Modal.Body>
-            <Modal.Footer>
-                <Button
-                variant="secondary"
-                onClick={() => setShowDeleteModal(false)}
-                >
-                İptal
-                </Button>
-                <Button variant="danger" type="submit">
-                Sil
-                </Button>
-            </Modal.Footer>
-            </Form>
-        </Modal>
+       {/* Saha Silme Modalı */}
+{showDeleteModal && (
+  <Modal show onHide={() => setShowDeleteModal(false)}>
+    <Modal.Header closeButton>
+      <Modal.Title>Saha Sil</Modal.Title>
+    </Modal.Header>
+    <Form onSubmit={handleFieldDelete}>
+      <Modal.Body>
+        {/* Buraya Select dropdown'u ekliyoruz */}
+        <Form.Group className="mb-3" controlId="fieldNameToDelete">
+          <Form.Label>Silmek istediğiniz sahayı seçin:</Form.Label>
+          <Form.Select
+            value={fieldNameToDelete}
+            onChange={(e) => setFieldNameToDelete(e.target.value)}
+          >
+            <option value="">Bir saha seçin</option>
+            {fields.map((f) => (
+              <option key={f.id} value={f.name}>
+                {f.name}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        {deleteError && (
+          <p className="text-danger">{deleteError}</p>
+        )}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          İptal
+        </Button>
+        <Button variant="danger" type="submit" disabled={!fieldNameToDelete}>
+          Sil
+        </Button>
+      </Modal.Footer>
+    </Form>
+  </Modal>
+)}
+
         </>
     );
     }

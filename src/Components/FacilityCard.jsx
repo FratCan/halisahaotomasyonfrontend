@@ -1,6 +1,6 @@
 import { Card, Button, Row, Col } from "react-bootstrap";
 
-const FacilityCard = ({ facility, onEdit }) => {
+const FacilityCard = ({ facility, equipments,onEdit }) => {
   return (
     <Card
       bg="light"
@@ -47,6 +47,31 @@ const FacilityCard = ({ facility, onEdit }) => {
               <strong>Konum:</strong> {facility.location} <br />
               <strong>Adres Detayı:</strong> {facility.addressDetails} <br />
               <br />
+              <strong>Ekipmanlar</strong>
+              <ul>
+                {equipments?.map((equipment, index) => (
+                  <li key={index}>
+                    <strong>Adı:</strong> {equipment.name} <br />
+                    <strong>Kiralanabilir:</strong>{" "}
+                    {equipment.isRentable ? "Evet" : "Hayır"} <br />
+                    <strong>Fiyat:</strong> {equipment.price} TL <br />
+                    <strong>Miktar:</strong> {equipment.quantity} <br />
+                    <strong>Fotoğraf:</strong>{" "}
+                    {equipment.photo ? (
+                      <img
+                        src={equipment.photo}
+                        alt={equipment.name}
+                        style={{ width: "100px", height: "100px" }}
+                      />
+                    ) : (
+                      <span>Fotoğraf mevcut değil</span>
+                    )}
+                    <br />
+                    <strong>Açıklama:</strong> {equipment.description} <br />
+                    <br />
+                  </li>
+                ))}
+              </ul>
               <strong>Kafe:</strong>{" "}
               <span style={{ color: facility.hasCafeteria ? "green" : "red" }}>
                 {facility.hasCafeteria ? "Evet" : "Hayır"}

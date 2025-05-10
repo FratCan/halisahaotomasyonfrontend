@@ -1,7 +1,12 @@
 import React from 'react';
 import { Table, Button } from 'react-bootstrap';
 
-const Calendar = ({ currentDate, setCurrentDate, weekDays, handleSlotClick, hoursRange, isAvailable }) => {
+const Calendar = ({ currentDate,
+    setCurrentDate,
+    weekDays,
+    handleSlotClick,
+    hoursRange,
+    isAvailable}) => {
     const goToPreviousWeek = () => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() - 7);

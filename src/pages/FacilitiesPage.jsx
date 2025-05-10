@@ -7,18 +7,31 @@ import {
   createFacility,
   uploadFacilityPhotos,
 } from "../api/FacilityApi";
+import {
+  getEquipments,
+  updateEquipment,
+  deleteEquipment,
+  createEquipments,
+} from "../api/EquipmentsApi";
 import FacilityCard from "../Components/FacilityCard";
 
 function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
+  const [equipments, setEquipments] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [deleteName, setDeleteName] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const [selectedEquipmets, setselectedEquipmets] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [facilityNameToDelete, setFacilityNameToDelete] = useState("");
+  const [name, setName] = useState("");
 
+
+ 
   useEffect(() => {
     fetchFacilities();
   }, []);
@@ -58,10 +71,14 @@ function FacilitiesPage() {
     setIsCreating(false);
   };
 
+
+
+
+
   const handleFacilitySubmit = async (e) => {
     e.preventDefault();
     const elems = e.target.elements;
-  
+
     const facilityData = {
       ownerId: 1,
       name: elems.name.value,
@@ -78,32 +95,36 @@ function FacilitiesPage() {
       hasToilet: elems.hasToilet.checked,
       equipments: [],
     };
-  
-    console.log("🔄 Adding facility", facilityData);
-  
+     
+    console.log("🔄 Adding facility", facilityData, );
+
     try {
       // 1. Önce yeni tesisi oluştur
       const newFacility = await createFacility(facilityData);
-  
+       
+
       // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
       if (photoFile) {
         const formData = new FormData();
         formData.append("photo", photoFile);
-  
+
         await uploadFacilityPhotos(newFacility.id, formData);
         console.log("✅ Fotoğraf yüklendi.");
       }
-  
+
       // 3. Güncel listeyi çek
       await fetchFacilities();
-  
+   
       // 4. Modalı kapat
       handleCloseModal();
     } catch (err) {
-      console.error("❌ Tesis ekleme başarısız:", err.response?.data || err.message);
+      console.error(
+        "❌ Tesis ekleme başarısız:",
+        err.response?.data || err.message
+      );
     }
   };
-  
+
   const handleFacilityUpdate = async (e) => {
     e.preventDefault();
     if (!selectedFacility) return;
@@ -157,7 +178,8 @@ function FacilitiesPage() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (e) => {
+    e.preventDefault();
     const facilityToDelete = facilities.find(
       (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
     );
@@ -206,7 +228,7 @@ function FacilitiesPage() {
 
       {/* Tesis Ekleme/Düzenleme Modal */}
       {showModal && (
-        <Modal show={showModal} onHide={handleCloseModal} size="lg">
+        <Modal show={showModal} onHide={handleCloseModal} size="xl">
           <Modal.Header closeButton>
             <Modal.Title>
               {isCreating
@@ -220,7 +242,7 @@ function FacilitiesPage() {
                 isCreating ? handleFacilitySubmit : handleFacilityUpdate
               }
             >
-              <Row>
+              <Row className="">
                 <Col>
                   <Form.Group controlId="photos" className="mb-3">
                     <Form.Label>Fotoğraf</Form.Label>
@@ -249,7 +271,8 @@ function FacilitiesPage() {
                       }}
                     />
                   </Form.Group>
-
+                </Col>
+                <Col>
                   <Form.Group controlId="name" className="mb-3">
                     <Form.Label>Adı</Form.Label>
                     <Form.Control
@@ -287,7 +310,6 @@ function FacilitiesPage() {
                     />
                   </Form.Group>
                 </Col>
-
                 <Col>
                   <Form.Group controlId="phone" className="mb-3">
                     <Form.Label>Telefon</Form.Label>
@@ -363,6 +385,9 @@ function FacilitiesPage() {
                     />
                   </Form.Group>
                 </Col>
+                <Col>
+
+                </Col>
               </Row>
 
               <div className="text-center mt-4">
@@ -376,32 +401,44 @@ function FacilitiesPage() {
       )}
 
       {/* Tesis Silme Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Tesis Sil</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Silinecek tesisin adını yazın:</Form.Label>
-              <Form.Control
-                type="text"
-                value={facilityNameToDelete}
-                onChange={(e) => setFacilityNameToDelete(e.target.value)}
-                placeholder="Örn: Arena Halı Saha"
-              />
-            </Form.Group>
+      {showDeleteModal && (
+        <Modal show onHide={() => setShowDeleteModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Tesis Sil</Modal.Title>
+          </Modal.Header>
+          <Form onSubmit={handleConfirmDelete}>
+            <Modal.Body>
+              {/* Buraya Select dropdown'u ekliyoruz */}
+              <Form.Group className="mb-3" controlId="fieldNameToDelete">
+                <Form.Label>Silmek istediğiniz tesisi seçin:</Form.Label>
+                <Form.Select
+                  value={facilityNameToDelete}
+                  onChange={(e) => setFacilityNameToDelete(e.target.value)}
+                >
+                  <option value="">Bir tesis seçin</option>
+                  {facilities.map((f) => (
+                    <option key={f.id} value={f.name}>
+                      {f.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+      
+              {deleteError && (
+                <p className="text-danger">{deleteError}</p>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                İptal
+              </Button>
+              <Button variant="danger" type="submit" disabled={!facilityNameToDelete}>
+                Sil
+              </Button>
+            </Modal.Footer>
           </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Vazgeç
-          </Button>
-          <Button variant="danger" onClick={handleConfirmDelete}>
-            Sil
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </Modal>
+      )}
     </>
   );
 }
