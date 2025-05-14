@@ -58,14 +58,12 @@
     // 5. Availability check
     const isAvailable = (day, hour) => {
         const dayName = day.toLocaleDateString("tr-TR", { weekday: "long" });
-        console.log("workingDays:", selectedField.workingDays);  // <-- Bu satırı ekleyelim
+        console.log("workingDays:", selectedField.workingDays); // <-- Bu satırı ekleyelim
         console.log("Day:", dayName);
         const h = parseInt(hour, 10);
         if (!selectedField.workingDays?.includes(dayName)) return false;
         return h >= startHour && h < endHour;
     };
-    
-    
 
     // 6. Slot handlers
     const handleSlotClick = (slot) => setSelectedSlot(slot);
@@ -111,7 +109,7 @@
                     )
                 }
                 >
-                &larr; Previous Field
+                &larr; Önceki Saha
                 </Button>
                 <h5>{selectedField.name}</h5>
                 <Button
@@ -122,7 +120,7 @@
                     )
                 }
                 >
-                Next Field &rarr;
+                Sonraki Saha &rarr;
                 </Button>
             </div>
             <Calendar

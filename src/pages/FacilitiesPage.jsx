@@ -7,31 +7,22 @@ import {
   createFacility,
   uploadFacilityPhotos,
 } from "../api/FacilityApi";
-import {
-  getEquipments,
-  updateEquipment,
-  deleteEquipment,
-  createEquipments,
-} from "../api/EquipmentsApi";
 import FacilityCard from "../Components/FacilityCard";
 
 function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
-  const [equipments, setEquipments] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [deleteName, setDeleteName] = useState("");
+//  const [deleteName, setDeleteName] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [selectedFacility, setSelectedFacility] = useState(null);
-  const [selectedEquipmets, setselectedEquipmets] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [facilityNameToDelete, setFacilityNameToDelete] = useState("");
-  const [name, setName] = useState("");
 
 
- 
+
   useEffect(() => {
     fetchFacilities();
   }, []);
@@ -71,10 +62,6 @@ function FacilitiesPage() {
     setIsCreating(false);
   };
 
-
-
-
-
   const handleFacilitySubmit = async (e) => {
     e.preventDefault();
     const elems = e.target.elements;
@@ -95,13 +82,12 @@ function FacilitiesPage() {
       hasToilet: elems.hasToilet.checked,
       equipments: [],
     };
-     
-    console.log("🔄 Adding facility", facilityData, );
+
+    console.log("🔄 Adding facility", facilityData);
 
     try {
       // 1. Önce yeni tesisi oluştur
       const newFacility = await createFacility(facilityData);
-       
 
       // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
       if (photoFile) {
@@ -114,7 +100,7 @@ function FacilitiesPage() {
 
       // 3. Güncel listeyi çek
       await fetchFacilities();
-   
+
       // 4. Modalı kapat
       handleCloseModal();
     } catch (err) {
@@ -198,17 +184,17 @@ function FacilitiesPage() {
 
   return (
     <>
-      <h2 className="text-center my-4">Tesisler</h2>
+      <h2 className="text-center my-4">Tesis Bilgisi</h2>
 
       <Row
         xs={1}
-        className="justify-content-center text-center mt-5 mb-4 g-3"
-        style={{ padding: 10 }}
+        className="justify-content-center text-center  g-0 px-5" // px-3: soldan ve sağdan 1.5rem padding
       >
         {facilities.map((f) => (
-          <Col key={f.id} className="d-flex flex-column align-items-center">
-            <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
-          </Col>
+          <FacilityCard
+            facility={f}
+            onEdit={() => handleEditClick(f.id)}
+          />
         ))}
       </Row>
 
@@ -385,9 +371,7 @@ function FacilitiesPage() {
                     />
                   </Form.Group>
                 </Col>
-                <Col>
-
-                </Col>
+                <Col></Col>
               </Row>
 
               <div className="text-center mt-4">
@@ -423,16 +407,21 @@ function FacilitiesPage() {
                   ))}
                 </Form.Select>
               </Form.Group>
-      
-              {deleteError && (
-                <p className="text-danger">{deleteError}</p>
-              )}
+
+              {deleteError && <p className="text-danger">{deleteError}</p>}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
                 İptal
               </Button>
-              <Button variant="danger" type="submit" disabled={!facilityNameToDelete}>
+              <Button
+                variant="danger"
+                type="submit"
+                disabled={!facilityNameToDelete}
+              >
                 Sil
               </Button>
             </Modal.Footer>

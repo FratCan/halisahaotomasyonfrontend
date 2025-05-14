@@ -3,26 +3,34 @@ import axios from "axios";
 const API_URL = "http://localhost:5021/api/facilities";
 
 export const getEquipments = async (facilityId) => {
+  if (!facilityId) throw new Error("FacilityId gerekli!");
+
   try {
     const { data } = await axios.get(`${API_URL}/${facilityId}/equipments`);
     return data;
   } catch (error) {
-    console.error("Hata:", error);
-    throw error; // Hatanın üst kata fırlatılması iyi olur, catch'leyen olursa
+    console.error("Ekipmanları çekerken hata:", error);
+    throw error;
   }
 };
+
 
 export const createEquipments = async (facilityId, equipmentsData) => {
   try {
     const formData = new FormData();
 
     for (const key in equipmentsData) {
-      if (Array.isArray(equipmentsData[key])) {
-        equipmentsData[key].forEach((item, index) => {
-          formData.append(`${key}[${index}]`, item);
-        });
-      } else {
-        formData.append(key, equipmentsData[key]);
+      const value = equipmentsData[key];
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach((item, index) => {
+            formData.append(`${key}[${index}]`, item);
+          });
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString()); // boolean -> string
+        } else {
+          formData.append(key, value);
+        }
       }
     }
 
@@ -38,10 +46,11 @@ export const createEquipments = async (facilityId, equipmentsData) => {
 
     return data;
   } catch (error) {
-    console.error("Ekipman oluşturulurken hata:", error);
+    console.error("Ekipman oluşturulurken hata:", error.response?.data || error.message);
     throw error;
   }
 };
+
 
 
 export const updateEquipment = async (facilityId, equipmentId, updatedData) => {
@@ -57,15 +66,29 @@ export const updateEquipment = async (facilityId, equipmentId, updatedData) => {
   }
 };
 
-
 export const deleteEquipment = async (facilityId, equipmentId) => {
-  try {
-    const { data } = await axios.delete(
-      `${API_URL}/${facilityId}/equipments/${equipmentId}`
-    );
+  const { data } = await axios.delete(`${API_URL}/${facilityId}/equipments/${equipmentId}`);
     return data;
+};
+export const  updateEquipmentPhotos = async (facilityId, equipmentId, photoFile) => {
+  const formData = new FormData();
+  formData.append('PhotoFiles', photoFile);
+
+  try {
+    const response = await axios.put(
+      `${API_URL}/${facilityId}/equipments/${equipmentId}/photos`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'accept': '*/*',
+        },
+      }
+    );
+    console.log("✅ Fotoğraf güncellendi:", response.data);
+    return response.data;
   } catch (error) {
-    console.error("Silme işlemi hatası:", error);
+    console.error("❌ Fotoğraf güncelleme hatası:", error.response?.data || error.message);
     throw error;
   }
 };

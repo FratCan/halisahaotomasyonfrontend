@@ -1,19 +1,44 @@
-import React, { useState } from 'react';
-import { Form, Container, Row, Col, Button, Card, Alert } from 'react-bootstrap';
+    import React, { useState } from "react";
+    import {
+    Form,
+    Container,
+    Row,
+    Col,
+    Button,
+    Card,
+    Alert,
+    } from "react-bootstrap";
 
-function Announcement() {
-    const [title, setTitle] = useState('');
-    const [text, setText] = useState('');
+    function Announcement() {
+    const [title, setTitle] = useState("");
+    const [text, setText] = useState("");
     const [announcements, setAnnouncements] = useState([]);
-    const [error, setError] = useState('');
+    const [error, setError] = useState("");
     const [openIndex, setOpenIndex] = useState(null); // hangi card açık
     const [editingIndex, setEditingIndex] = useState(null); // Düzenleme durumu
-    const [editedTitle, setEditedTitle] = useState('');
-    const [editedText, setEditedText] = useState('');
+    const [editedTitle, setEditedTitle] = useState("");
+    const [editedText, setEditedText] = useState("");
+    const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+        setImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+        } else {
+        setImage(null);
+        setImagePreview(null);
+        }
+    };
 
     const handleSubmit = () => {
         if (!title.trim() || !text.trim()) {
-        setError('Lütfen hem başlık hem de metin girin.');
+        setError("Lütfen hem başlık hem de metin girin.");
         return;
         }
 
@@ -24,9 +49,11 @@ function Announcement() {
         };
 
         setAnnouncements([newAnnouncement, ...announcements]);
-        setTitle('');
-        setText('');
-        setError('');
+        setTitle("");
+        setText("");
+        setError("");
+        setImage("");
+        setImagePreview("")
     };
 
     const toggleCard = (index) => {
@@ -53,15 +80,17 @@ function Announcement() {
         );
         setAnnouncements(updatedAnnouncements);
         setEditingIndex(null); // Düzenlemeyi bitir
-        setEditedTitle('');
-        setEditedText('');
+        setEditedTitle("");
+        setEditedText("");
+        setImage("");
+        setImagePreview("");
     };
 
     return (
         <Container className="mt-5">
         <Row className="g-5">
             <Col>
-            <h4 className='mb-4'>Duyuru Oluştur</h4>
+            <h4 className="mb-4">Duyuru Oluştur</h4>
             <Form>
                 {error && <Alert variant="danger">{error}</Alert>}
 
@@ -70,7 +99,11 @@ function Announcement() {
                     type="text"
                     placeholder="Duyuru başlığı girin..."
                     value={editingIndex !== null ? editedTitle : title}
-                    onChange={(e) => (editingIndex !== null ? setEditedTitle(e.target.value) : setTitle(e.target.value))}
+                    onChange={(e) =>
+                    editingIndex !== null
+                        ? setEditedTitle(e.target.value)
+                        : setTitle(e.target.value)
+                    }
                 />
                 </Form.Group>
 
@@ -79,58 +112,101 @@ function Announcement() {
                     as="textarea"
                     placeholder="Metninizi buraya yazın..."
                     value={editingIndex !== null ? editedText : text}
-                    onChange={(e) =>  (editingIndex !== null ? setEditedText(e.target.value) : setText(e.target.value))}
+                    onChange={(e) =>
+                    editingIndex !== null
+                        ? setEditedText(e.target.value)
+                        : setText(e.target.value)
+                    }
                     style={{
-                    height: '200px',
-                    resize: 'none',
-                    borderRadius: '10px',
+                    height: "200px",
+                    resize: "none",
+                    borderRadius: "10px",
                     }}
                 />
                 </Form.Group>
-                <Button variant="success" onClick={editingIndex !== null ? saveEditedAnnouncement : handleSubmit}>
-                {editingIndex !== null ? 'Kaydet' : 'Oluştur'}
+
+                {/* Fotoğraf Ekleme Alanı */}
+                <Form.Group controlId="announcementImage" className="mb-3">
+                <Form.Label>Fotoğraf Ekle (isteğe bağlı)</Form.Label>
+                <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e)}
+                />
+                </Form.Group>
+
+                {/* Yüklenen görsel önizlemesi */}
+                {imagePreview && (
+                <div className="mb-3">
+                    <img
+                    src={imagePreview}
+                    alt="Yüklenen görsel"
+                    style={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        borderRadius: "10px",
+                    }}
+                    />
+                </div>
+                )}
+
+                <Button
+                variant="success"
+                onClick={
+                    editingIndex !== null ? saveEditedAnnouncement : handleSubmit
+                }
+                >
+                {editingIndex !== null ? "Kaydet" : "Oluştur"}
                 </Button>
             </Form>
             </Col>
 
             <Col>
             <h4>Duyurular</h4>
-            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            <div style={{ maxHeight: "500px", overflowY: "auto" }}>
                 {announcements.length === 0 && <p>Henüz duyuru yok.</p>}
                 {announcements.map((ann, index) => (
                 <Card className="mt-3" key={index}>
-                <Card.Header
+                    <Card.Header
                     onClick={() => toggleCard(index)}
-                    style={{ cursor: 'pointer', backgroundColor: '#f8f9fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={{
+                        cursor: "pointer",
+                        backgroundColor: "#f8f9fa",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
                     >
                     <strong>{ann.title}</strong>
-                    <small className="text-muted" style={{ fontSize: '0.85rem' }}>{ann.createdAt}</small>
+                    <small className="text-muted" style={{ fontSize: "0.85rem" }}>
+                        {ann.createdAt}
+                    </small>
                     <Button
                         variant="outline-danger"
                         size="sm"
                         onClick={(e) => {
-                            e.stopPropagation(); // Kart açılmasını engelle
-                            deleteAnnouncement(index);
+                        e.stopPropagation(); // Kart açılmasını engelle
+                        deleteAnnouncement(index);
                         }}
-                        >
+                    >
                         ❌
                     </Button>
                     <Button
-                    variant="outline-info"
-                    size="sm"
-                    onClick={(e) => {
+                        variant="outline-info"
+                        size="sm"
+                        onClick={(e) => {
                         e.stopPropagation();
                         editAnnouncement(index);
-                    }}
-                    className="ms-2"
+                        }}
+                        className="ms-2"
                     >
-                    ✏️
+                        ✏️
                     </Button>
-                </Card.Header>
+                    </Card.Header>
                     {openIndex === index && (
                     <Card.Body>
                         <Card.Text>{ann.text}</Card.Text>
-                        <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+                        <div className="text-muted" style={{ fontSize: "0.9rem" }}>
                         Oluşturulma: {ann.createdAt}
                         </div>
                     </Card.Body>
@@ -142,6 +218,6 @@ function Announcement() {
         </Row>
         </Container>
     );
-}
+    }
 
-export default Announcement;
+    export default Announcement;
