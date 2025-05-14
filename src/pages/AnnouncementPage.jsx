@@ -1,4 +1,4 @@
-    import React, { useState } from "react";
+    import React, { useState,useEffect } from "react";
     import {
     Form,
     Container,
@@ -8,8 +8,9 @@
     Card,
     Alert,
     } from "react-bootstrap";
+    import { getAnnouncements } from "../api/Announcement";
 
-    function Announcement() {
+    const Announcement = ({ facility}) => {
     const [title, setTitle] = useState("");
     const [text, setText] = useState("");
     const [announcements, setAnnouncements] = useState([]);
@@ -20,6 +21,23 @@
     const [editedText, setEditedText] = useState("");
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+
+    useEffect(() => {
+        async function fetchEquipments() {
+        try {
+            const data = await getAnnouncements(facility.id);
+            console.log("Gelen duyurular:", data);
+            setAnnouncements(data);
+        } catch (error) {
+            console.error("Duyurular alınamadı:", error);
+        }
+        }
+
+        if (facility?.id) {
+        fetchEquipments();
+        }
+    }, [facility?.id]);
+
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
