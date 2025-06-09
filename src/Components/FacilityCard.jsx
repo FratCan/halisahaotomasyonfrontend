@@ -120,7 +120,7 @@ const FacilityCard = ({ facility, onEdit }) => {
               variant="top"
               src={
                 facility.photoUrls?.[0]
-                  ? `http://localhost:5021/${facility.photoUrls[0]}`
+                  ? `https://halisaha.up.railway.app/${facility.photoUrls[0]}`
                   : ""
               }
               alt={facility.name}
@@ -142,7 +142,6 @@ const FacilityCard = ({ facility, onEdit }) => {
               }}
             >
               {facility.name}
-              <br></br>
             </Card.Title>
 
             <Card.Text
@@ -196,6 +195,24 @@ const FacilityCard = ({ facility, onEdit }) => {
                   {facility.hasToilet ? "Evet" : "Hayır"}
                 </span>
               </div>
+              <div style={{ display: "flex" }}>
+                <strong style={{ width: "140px" }}>Kamera:</strong>
+                <span style={{ color: facility.hasSecurityCameras ? "green" : "red" }}>
+                  {facility.hasSecurityCameras ? "Evet" : "Hayır"}
+                </span>
+              </div>
+              <div style={{ display: "flex" }}>
+                <strong style={{ width: "140px" }}>Ulaşım:</strong>
+                <span style={{ color: facility.hasTransportService ? "green" : "red" }}>
+                  {facility.hasTransportService ? "Evet" : "Hayır"}
+                </span>
+              </div>
+              <div style={{ display: "flex" }}>
+                <strong style={{ width: "140px" }}>Park:</strong>
+                <span style={{ color: facility.hasParking ? "green" : "red" }}>
+                  {facility.hasParking ? "Evet" : "Hayır"}
+                </span>
+              </div>
             </Card.Text>
 
             <Button
@@ -223,9 +240,7 @@ const FacilityCard = ({ facility, onEdit }) => {
             </div>
 
             <Card.Text style={{ fontSize: "16px", color: "#000000" }}>
-              {equipments.length === 0 ? (
-                <p>Yükleniyor...</p>
-              ) : (
+              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
                 <table className="table table-bordered table-sm">
                   <thead>
                     <tr>
@@ -268,7 +283,7 @@ const FacilityCard = ({ facility, onEdit }) => {
                     ))}
                   </tbody>
                 </table>
-              )}
+              </div>
             </Card.Text>
           </Col>
         </Row>

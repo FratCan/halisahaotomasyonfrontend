@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5021/api/facilities";
-
+const API_URL = "https://halisaha.up.railway.app/api/facilities";
+//lokaldeki=http://localhost:5021/api/facilities
 export const getEquipments = async (facilityId) => {
   if (!facilityId) throw new Error("FacilityId gerekli!");
 

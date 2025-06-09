@@ -1,12 +1,39 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { Container, Row, Col, Card, Button, Nav } from "react-bootstrap";
-import { useFieldContext } from "../Components/FieldContext"; // Import the context
+//import { useFieldContext } from "../Components/FieldContext"; // Import the context
+import { getAllFields } from "../api/FieldsApi"; // API'den saha verilerini almak için fonksiyon
+import { Offcanvas } from "react-bootstrap";
+
+
 
 function HomePage() {
-  const { fields } = useFieldContext(); // Access fields from context
-  const [selectedField, setSelectedField] = useState(
-    fields[0]?.name || "Saha 1"
-  );
+  //const { fields } = useFieldContext(); // Access fields from context
+  //const [selectedField, setSelectedField] = useState(
+  //  fields[0]?.name || "Saha 1"
+  //);
+const [showSidebar, setShowSidebar] = useState(false);
+
+const handleCloseSidebar = () => setShowSidebar(false);
+const handleShowSidebar = () => setShowSidebar(true);
+
+
+const [field, setField] = useState([]);
+const [selectedField, setSelectedField] = useState("Saha 1");
+
+useEffect(() => {
+  const fetchFields = async () => {
+    try {
+      const response = await getAllFields(); // API'den veriyi al
+      setField(response); // response.data olabilir, getFields nasıl yazıldığına bağlı
+      setSelectedField(response[0]?.name || "Saha 1");
+    } catch (error) {
+      console.error("Saha verisi alınamadı:", error);
+    }
+  };
+
+  fetchFields();
+}, []);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // 📅 Tarih formatlayan fonksiyon
@@ -105,7 +132,7 @@ function HomePage() {
                 <Card key={index} className="mb-2 p-2">
                   <b>{match.time}</b>{" "}
                   <span>
-                    {match.teams} --- Saha: {match.saha}
+                    {match.teams} --- Saha: {field.name}
                   </span>
                 </Card>
               ))}
@@ -128,7 +155,7 @@ function HomePage() {
               variant="tabs"
               defaultActiveKey={selectedField}
             >
-              {fields.map((field) => (
+              {field.map((field) => (
                 <Nav.Item key={field.id}>
                   <Nav.Link
                     eventKey={field.name}

@@ -12,7 +12,7 @@ import FacilityCard from "../Components/FacilityCard";
 function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
   const [showModal, setShowModal] = useState(false);
-//  const [deleteName, setDeleteName] = useState("");
+  //  const [deleteName, setDeleteName] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
@@ -21,16 +21,20 @@ function FacilitiesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [facilityNameToDelete, setFacilityNameToDelete] = useState("");
 
-
+  // OwnerId'yi localStorage'dan al
+  const ownerId = Number(localStorage.getItem("userId"));
 
   useEffect(() => {
-    fetchFacilities();
-  }, []);
+    if (ownerId) {
+      fetchFacilities(ownerId);
+    }
+  }, [ownerId]);
 
-  const fetchFacilities = async () => {
+  const fetchFacilities = async (ownerId) => {
     try {
-      const data = await getFacilities();
-      setFacilities(data);
+      // Belirli bir id'ye ait tesisi çekmek için id parametresi gönderin
+      const data = await getFacilities(ownerId);
+      setFacilities(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Facility çekilemedi:", err);
     }
@@ -40,7 +44,7 @@ function FacilitiesPage() {
     const fresh = facilities.find((f) => f.id === id);
     setSelectedFacility(fresh);
     setPhotoPreview(
-      fresh.photoUrls?.[0] ? `http://localhost:5021/${fresh.photoUrls[0]}` : ""
+      fresh.photoUrls?.[0] ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}` : ""
     );
 
     setIsCreating(false);
@@ -67,7 +71,7 @@ function FacilitiesPage() {
     const elems = e.target.elements;
 
     const facilityData = {
-      ownerId: 1,
+      ownerId, // localStorage'dan gelen ownerId'yi burada kullan!
       name: elems.name.value,
       email: elems.email.value,
       location: elems.location.value,
@@ -80,6 +84,9 @@ function FacilitiesPage() {
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
       hasToilet: elems.hasToilet.checked,
+      hasSecurityCameras: elems.hasSecurityCameras,
+      hasTransportService: elems.hasTransportService,
+      hasParking: elems.hasParking,
       equipments: [],
     };
 
@@ -111,53 +118,57 @@ function FacilitiesPage() {
     }
   };
 
-  const handleFacilityUpdate = async (e) => {
-    e.preventDefault();
-    if (!selectedFacility) return;
+const handleFacilityUpdate = async (e) => {
+  e.preventDefault();
+  if (!selectedFacility) return;
 
-    const elems = e.target.elements;
+  const elems = e.target.elements;
 
-    const updatedData = {
-      name: elems.name.value,
-      email: elems.email.value,
-      location: elems.location.value,
-      addressDetails: elems.addressDetails.value,
-      phone: elems.phone.value,
-      bankAccountInfo: elems.bankAccountInfo.value,
-      city: elems.city.value,
-      town: elems.town.value,
-      description: elems.description.value,
-      hasCafeteria: elems.hasCafeteria.checked,
-      hasShower: elems.hasShower.checked,
-      hasToilet: elems.hasToilet.checked,
-      fields: [],
-      equipments: [],
-      photoUrls: selectedFacility.photoUrls || [], // güncel kalsın
-    };
-
-    console.log("🔄 Updating facility", selectedFacility.id, updatedData);
-
-    try {
-      // 1. Fotoğraf var mı kontrol et
-      if (photoFile) {
-        const photoFormData = new FormData();
-        photoFormData.append("photo", photoFile);
-
-        // uploadFacilityPhotos fonksiyonuyla sadece fotoğrafı yükle
-        await uploadFacilityPhotos(selectedFacility.id, photoFormData);
-        console.log("✅ Fotoğraf yüklendi.");
-      }
-
-      // 2. Diğer alanları update et
-      await updateFacility(selectedFacility.id, updatedData);
-      console.log("✅ Tesis bilgileri güncellendi.");
-
-      await fetchFacilities();
-      handleCloseModal();
-    } catch (err) {
-      console.error("❌ Update failed:", err.response?.data || err.message);
-    }
+  const updatedData = {
+    name: elems.name.value,
+    email: elems.email.value,
+    location: elems.location.value,
+    addressDetails: elems.addressDetails.value,
+    phone: elems.phone.value,
+    bankAccountInfo: elems.bankAccountInfo.value,
+    city: elems.city.value,
+    town: elems.town.value,
+    description: elems.description.value,
+    hasCafeteria: elems.hasCafeteria.checked,
+    hasShower: elems.hasShower.checked,
+    hasToilet: elems.hasToilet.checked,
+    hasSecurityCameras: elems.hasSecurityCameras.checked,
+    hasTransportService: elems.hasTransportService.checked,
+    hasParking: elems.hasParking.checked,
+    fields: [],
+    equipments: [],
+    photoUrls: selectedFacility.photoUrls || [],
   };
+
+  console.log("🔄 Updating facility", selectedFacility.id, updatedData);
+
+  try {
+    // Fotoğraf varsa yükle
+    if (photoFile) {
+      const photoFormData = new FormData();
+      photoFormData.append("photo", photoFile);
+      await uploadFacilityPhotos(selectedFacility.id, photoFormData);
+      console.log("✅ Fotoğraf yüklendi.");
+    }
+
+    // Diğer alanları update et
+    await updateFacility(selectedFacility.id, updatedData);
+    console.log("✅ Tesis bilgileri güncellendi.");
+
+    // 🔥🔥 Güncel verileri yeniden çek
+    await fetchFacilities(ownerId);
+
+    handleCloseModal();
+  } catch (err) {
+    console.error("❌ Update failed:", err.response?.data || err.message);
+  }
+};
+
 
   const handleOpenDeleteModal = () => {
     setFacilityNameToDelete("");
@@ -165,22 +176,27 @@ function FacilitiesPage() {
   };
 
   const handleConfirmDelete = async (e) => {
-    e.preventDefault();
-    const facilityToDelete = facilities.find(
-      (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
-    );
-    if (!facilityToDelete) {
-      alert("Bu isimde bir tesis bulunamadı!");
-      return;
-    }
-    try {
-      await deleteFacility(facilityToDelete.id);
-      await fetchFacilities();
-      setShowDeleteModal(false);
-    } catch (err) {
-      console.error("❌ Silme başarısız:", err.response?.data || err.message);
-    }
-  };
+  e.preventDefault();
+  const facilityToDelete = facilities.find(
+    (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
+  );
+  if (!facilityToDelete) {
+    alert("Bu isimde bir tesis bulunamadı!");
+    return;
+  }
+  try {
+    await deleteFacility(facilityToDelete.id);
+
+    // 🔥 ownerId parametresini geçirerek fetch yap
+    await fetchFacilities(ownerId);
+
+    setShowDeleteModal(false);
+  } catch (err) {
+    console.error("❌ Silme başarısız:", err.response?.data || err.message);
+  }
+};
+
+  console.log("Facilities verisi:", facilities);
 
   return (
     <>
@@ -191,10 +207,7 @@ function FacilitiesPage() {
         className="justify-content-center text-center  g-0 px-5" // px-3: soldan ve sağdan 1.5rem padding
       >
         {facilities.map((f) => (
-          <FacilityCard
-            facility={f}
-            onEdit={() => handleEditClick(f.id)}
-          />
+          <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
         ))}
       </Row>
 
@@ -343,35 +356,69 @@ function FacilitiesPage() {
                   </Form.Group>
 
                   {/* Checkboxlar */}
+                  <Row>
+                    <Col>
+                      <Form.Group controlId="hasCafeteria" className="mb-2">
+                        <Form.Check
+                          name="hasCafeteria"
+                          type="checkbox"
+                          label="Kafeterya"
+                          defaultChecked={
+                            selectedFacility?.hasCafeteria || false
+                          }
+                        />
+                      </Form.Group>
 
-                  <Form.Group controlId="hasCafeteria" className="mb-2">
-                    <Form.Check
-                      name="hasCafeteria"
-                      type="checkbox"
-                      label="Kafeterya"
-                      defaultChecked={selectedFacility?.hasCafeteria || false}
-                    />
-                  </Form.Group>
+                      <Form.Group controlId="hasShower" className="mb-2">
+                        <Form.Check
+                          name="hasShower"
+                          type="checkbox"
+                          label="Duş"
+                          defaultChecked={selectedFacility?.hasShower || false}
+                        />
+                      </Form.Group>
 
-                  <Form.Group controlId="hasShower" className="mb-2">
-                    <Form.Check
-                      name="hasShower"
-                      type="checkbox"
-                      label="Duş"
-                      defaultChecked={selectedFacility?.hasShower || false}
-                    />
-                  </Form.Group>
+                      <Form.Group controlId="hasToilet" className="mb-2">
+                        <Form.Check
+                          name="hasToilet"
+                          type="checkbox"
+                          label="Tuvalet"
+                          defaultChecked={selectedFacility?.hasToilet || false}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col>
+                      <Form.Group controlId="hasSecurityCameras" className="mb-2">
+                        <Form.Check
+                          name="hasSecurityCameras"
+                          type="checkbox"
+                          label="Kamera"
+                          defaultChecked={
+                            selectedFacility?.hasSecurityCameras || false
+                          }
+                        />
+                      </Form.Group>
 
-                  <Form.Group controlId="hasToilet" className="mb-2">
-                    <Form.Check
-                      name="hasToilet"
-                      type="checkbox"
-                      label="Tuvalet"
-                      defaultChecked={selectedFacility?.hasToilet || false}
-                    />
-                  </Form.Group>
+                      <Form.Group controlId="hasTransportService" className="mb-2">
+                        <Form.Check
+                          name="hasTransportService"
+                          type="checkbox"
+                          label="Ulaşım Hizmeti"
+                          defaultChecked={selectedFacility?.hasTransportService || false}
+                        />
+                      </Form.Group>
+
+                      <Form.Group controlId="hasParking" className="mb-2">
+                        <Form.Check
+                          name="hasParking"
+                          type="checkbox"
+                          label="Park Alanı"
+                          defaultChecked={selectedFacility?.hasParking || false}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
                 </Col>
-                <Col></Col>
               </Row>
 
               <div className="text-center mt-4">

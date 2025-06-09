@@ -1,9 +1,12 @@
 // src/api/fieldsApi.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5021/api/facilities/fields';
+//lokaldekki=http://localhost:5021/api/facilities/fields
+const API_URL = 'https://halisaha.up.railway.app/api/facilities/fields ';
 
-export const getFields = async () => {
+
+
+export const getAllFields = async () => {
   try {
     const {data} = await axios.get(API_URL);
     return  data;
@@ -12,6 +15,18 @@ export const getFields = async () => {
   }
 };
 
+
+export const getFields = async (facilityId) => {
+  if (!facilityId) throw new Error("FieldId gerekli!");
+//(`${API_URL}/${fieldId}`);
+    try {
+        const { data } = await axios.get(`${API_URL}?facilityId=${facilityId}`);//
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error("Sahaları çekerken hata:", error);
+        throw error;
+    }
+};
 export const createField = async (fieldData) => {
   const formData = new FormData();
 

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Container, Row, Col, Form, Button, Card, Alert, InputGroup } from "react-bootstrap"
-import { Eye, EyeOff, User, Mail, MapPin, Calendar } from "lucide-react"
+import { Container, Row, Col, Form, Button, Alert, InputGroup } from "react-bootstrap"
+import { Eye, EyeOff, User, Mail, MapPin, Calendar, Lock, ArrowRight, LogIn } from "lucide-react"
 import { Link } from 'react-router-dom'
-import {registerApp} from '../api/AuthApi' // Register fonksiyonunu import et
+import { registerApp } from '../api/AuthApi'
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({
@@ -12,26 +12,29 @@ export default function RegisterPage() {
         lastName: "",
         username: "",
         email: "",
-        password: "",
+        role:"Owner",
         city: "",
         town: "",
         birthDate: "",
-        password:""
+        password: "",
+        agreeTerms: false
     })
 
     const [showPassword, setShowPassword] = useState(false)
     const [validated, setValidated] = useState(false)
     const [error, setError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
         setFormData({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value,
+            ...formData,
+            [name]: type === "checkbox" ? checked : value,
         })
     }
     
     const calculateAge = (birthDate) => {
+        if (!birthDate) return 0
         const birthDateObj = new Date(birthDate)
         const today = new Date()
         let age = today.getFullYear() - birthDateObj.getFullYear()
@@ -54,228 +57,419 @@ export default function RegisterPage() {
 
         const age = calculateAge(formData.birthDate)
         if (age < 18) {
-            setError("18 yaşından küçük kullanıcılar kayıt olamaz.")
+            setError("Kayıt için en az 18 yaşında olmalısınız.")
             return
         }
-        setValidated(true)
-        setError("")
-        
+
         try {
-            // Register işlemi
+            setIsLoading(true)
+            setError("")
+            
             const response = await registerApp(
                 formData.firstName,
                 formData.lastName,
                 formData.username,
                 formData.email,
+                formData.role,
                 formData.city,
                 formData.town,
                 formData.birthDate,
-                formData.password,
-                //formData.role.Owner
+                formData.password
             )
 
-            // Kayıt başarılı, burada kullanıcıyı yönlendirebilirsiniz veya başka işlemler yapabilirsiniz
             console.log("Kayıt başarılı:", response)
+            // Başarılı kayıt sonrası yönlendirme
         } catch (error) {
-            setError("Kayıt işlemi sırasında bir hata oluştu.")
-            console.error("Kayıt hatası:", error)
+            setError(error.response?.data?.message || "Kayıt işlemi sırasında bir hata oluştu. Lütfen bilgilerinizi kontrol edin.")
+        } finally {
+            setIsLoading(false)
         }
     }
 
     return (
-        <Container fluid style={{ maxWidth: "3600px", width: "100%" }}  className="bg-light min-vh-100 d-flex align-items-center justify-content-center py-5 ">
-        <Row className="justify-content-center w-100">
-        <Col xs={12} sm={12} md={10} lg={10} xl={8}>
-            <Card className="shadow-lg border-0 rounded-lg">
-                <Card.Header className="bg-primary text-white text-center py-4">
-                <h2 className="fw-bold mb-0">Online Halısaham</h2>
-                </Card.Header>
-                <Card.Body className="p-4 p-md-5">
-                {error && <Alert variant="danger">{error}</Alert>}
+        <div className="register-page">
+            <Row className="g-0 min-vh-100">
+                {/* Sol Sabit Panel */}
+                <Col lg={5} className="register-sidebar">
+                    <div className="register-sidebar-content">
+                        <div className="logo-icon">
+                            <User size={48} />
+                        </div>
+                        <h1>Halısaha Rezervasyon</h1>
+                        <p className="lead">Spor yapmanın en kolay yolu</p>
+                        <div className="features">
+                            <div className="feature-item">
+                                <div className="feature-icon">
+                                    <Calendar size={24} />
+                                </div>
+                                <div>Kolay rezervasyon takibi</div>
+                            </div>
+                            <div className="feature-item">
+                                <div className="feature-icon">
+                                    <Lock size={24} />
+                                </div>
+                                <div>Güvenli ödeme takibi</div>
+                            </div>
+                        </div>
 
-                <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                    <Row className="mb-3">
-                    <Col md={4}>
-                        <Form.Group className="mb-3" controlId="firstName">
-                        <Form.Label>Ad</Form.Label>
-                        <InputGroup>
-                            <InputGroup.Text>
-                            <User size={16} />
-                            </InputGroup.Text>
-                            <Form.Control
-                            type="text"
-                            name="firstName"
-                            placeholder="Adınız"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required
-                            />
-                            <Form.Control.Feedback type="invalid">Lütfen adınızı giriniz.</Form.Control.Feedback>
-                        </InputGroup>
-                        </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                        <Form.Group className="mb-3" controlId="lastName">
-                        <Form.Label>Soyad</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="lastName"
-                            placeholder="Soyadınız"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required
-                        />
-                        <Form.Control.Feedback type="invalid">Lütfen soyadınızı giriniz.</Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                    <Form.Group className="mb-3" controlId="username">
-                    <Form.Label>Kullanıcı Adı</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text>@</InputGroup.Text>
-                        <Form.Control
-                        type="text"
-                        name="username"
-                        placeholder="Kullanıcı adınızı giriniz"
-                        value={formData.username}
-                        onChange={handleChange}
-                        required
-                        />
-                        <Form.Control.Feedback type="invalid">Lütfen bir kullanıcı adı giriniz.</Form.Control.Feedback>
-                    </InputGroup>
-                    </Form.Group>
-                    </Col>
-                    </Row>
-
-                    <Row className="mb-3">
-                    <Col md={4}>
-                    <Form.Group className="mb-3" controlId="email">
-                    <Form.Label>E-posta Adresi</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text>
-                        <Mail size={16} />
-                        </InputGroup.Text>
-                        <Form.Control
-                        type="email"
-                        name="email"
-                        placeholder="E-posta adresinizi giriniz"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        />
-                        <Form.Control.Feedback type="invalid">
-                        Lütfen geçerli bir e-posta adresi giriniz.
-                        </Form.Control.Feedback>
-                    </InputGroup>
-                    </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                        <Form.Group controlId="city">
-                        <Form.Label>Şehir</Form.Label>
-                        <InputGroup>
-                            <InputGroup.Text>
-                            <MapPin size={16} />
-                            </InputGroup.Text>
-                            <Form.Control
-                            type="text"
-                            name="city"
-                            placeholder="Şehir"
-                            value={formData.city}
-                            onChange={handleChange}
-                            required
-                            />
-                            <Form.Control.Feedback type="invalid">Lütfen şehir giriniz.</Form.Control.Feedback>
-                        </InputGroup>
-                        </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                        <Form.Group controlId="town">
-                        <Form.Label>İlçe</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="town"
-                            placeholder="İlçe"
-                            value={formData.town}
-                            onChange={handleChange}
-                            required
-                        />
-                        <Form.Control.Feedback type="invalid">Lütfen ilçe giriniz.</Form.Control.Feedback>
-                        </Form.Group>
-                    </Col>
-                    </Row>
-
-                    <Row>
-                        <Col md={4}>
-                        <Form.Group className="mb-3" controlId="birthDate">
-                    <Form.Label>Doğum Tarihi</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text>
-                        <Calendar size={16} />
-                        </InputGroup.Text>
-                        <Form.Control
-                        type="date"
-                        name="birthDate"
-                        value={formData.birthDate}
-                        onChange={handleChange}
-                        required
-                        />
-                        <Form.Control.Feedback type="invalid">Lütfen doğum tarihinizi giriniz.</Form.Control.Feedback>
-                    </InputGroup>
-                    </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                        <Form.Group className="mb-3" controlId="password">
-                    <Form.Label>Şifre</Form.Label>
-                    <InputGroup>
-                        <Form.Control
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="Şifrenizi giriniz"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        minLength={8}
-                        />
-                        <Button variant="outline-secondary" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </Button>
-                        <Form.Control.Feedback type="invalid">Şifreniz en az 9 karakter olmalıdır.</Form.Control.Feedback>
-                    </InputGroup>
-                    </Form.Group>
-                        </Col>
-                    </Row>
-
-                    <Form.Group className="mb-4" controlId="agreeTerms">
-                    <Form.Check
-                        type="checkbox"
-                        name="agreeTerms"
-                        label="Kullanım şartlarını ve gizlilik politikasını kabul ediyorum"
-                        checked={formData.agreeTerms}
-                        onChange={handleChange}
-                        required
-                        feedback="Bu alanı işaretlemeniz gerekmektedir."
-                        feedbackType="invalid"
-                    />
-                    </Form.Group>
-
-                    <div className="d-grid">
-                    <Button variant="primary" type="submit" size="lg" className="fw-bold">
-                        Kayıt Ol
-                    </Button>
+                        <div className="auth-redirect">
+                            <span>Zaten hesabınız var mı?</span>
+                            <Link to="/login">
+                                <Button variant="outline-light">
+                                    <LogIn size={18} className="me-2" />
+                                    Giriş Yap
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
-                </Form>
-                </Card.Body>
-                <Card.Footer className="py-3 bg-white text-center">
-                <div className="text-muted">
-                    Zaten bir hesabınız var mı?{" "}
-                    <Link to="/login" className="text-primary text-decoration-none">
-                    Giriş Yap
-                    </Link>
-                </div>
-                </Card.Footer>
-            </Card>
-            </Col>
-        </Row>
-        </Container>
+                </Col>
+
+                {/* Sağ Form Panel */}
+                <Col lg={7} className="register-form-col">
+                    <div className="register-form-container">
+                        <div className="register-form-header">
+                            <h2>Hesap Oluştur</h2>
+                            <br></br>
+                        </div>
+
+                        {error && (
+                            <Alert variant="danger" className="text-center">
+                                {error}
+                            </Alert>
+                        )}
+
+                        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="firstName">
+                                        <Form.Label>Ad</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text>
+                                                <User size={18} />
+                                            </InputGroup.Text>
+                                            <Form.Control
+                                                type="text"
+                                                name="firstName"
+                                                placeholder="Adınız"
+                                                value={formData.firstName}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </InputGroup>
+                                        <Form.Control.Feedback type="invalid">
+                                            Lütfen adınızı giriniz.
+                                        </Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group controlId="lastName">
+                                        <Form.Label>Soyad</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            name="lastName"
+                                            placeholder="Soyadınız"
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <Form.Control.Feedback type="invalid">
+                                            Lütfen soyadınızı giriniz.
+                                        </Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Form.Group className="mb-3" controlId="username">
+                                <Form.Label>Kullanıcı Adı</Form.Label>
+                                <InputGroup>
+                                    <InputGroup.Text>@</InputGroup.Text>
+                                    <Form.Control
+                                        type="text"
+                                        name="username"
+                                        placeholder="Kullanıcı adınız"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid">
+                                    Lütfen bir kullanıcı adı giriniz.
+                                </Form.Control.Feedback>
+                            </Form.Group>
+
+                            <Form.Group className="mb-3" controlId="email">
+                                <Form.Label>E-posta</Form.Label>
+                                <InputGroup>
+                                    <InputGroup.Text>
+                                        <Mail size={18} />
+                                    </InputGroup.Text>
+                                    <Form.Control
+                                        type="email"
+                                        name="email"
+                                        placeholder="ornek@email.com"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid">
+                                    Lütfen geçerli bir e-posta adresi giriniz.
+                                </Form.Control.Feedback>
+                            </Form.Group>
+
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="city">
+                                        <Form.Label>Şehir</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text>
+                                                <MapPin size={18} />
+                                            </InputGroup.Text>
+                                            <Form.Control
+                                                type="text"
+                                                name="city"
+                                                placeholder="Şehir"
+                                                value={formData.city}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </InputGroup>
+                                        <Form.Control.Feedback type="invalid">
+                                            Lütfen şehir giriniz.
+                                        </Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group controlId="town">
+                                        <Form.Label>İlçe</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            name="town"
+                                            placeholder="İlçe"
+                                            value={formData.town}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <Form.Control.Feedback type="invalid">
+                                            Lütfen ilçe giriniz.
+                                        </Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Row className="mb-3">
+                                <Col md={6}>
+                                    <Form.Group controlId="birthDate">
+                                        <Form.Label>Doğum Tarihi</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text>
+                                                <Calendar size={18} />
+                                            </InputGroup.Text>
+                                            <Form.Control
+                                                type="date"
+                                                name="birthDate"
+                                                value={formData.birthDate}
+                                                onChange={handleChange}
+                                                required
+                                                max={new Date().toISOString().split('T')[0]}
+                                            />
+                                        </InputGroup>
+                                        <Form.Control.Feedback type="invalid">
+                                            Lütfen doğum tarihinizi giriniz.
+                                        </Form.Control.Feedback>
+                                        {formData.birthDate && (
+                                            <div className="age-info">
+                                                Yaşınız: {calculateAge(formData.birthDate)}
+                                            </div>
+                                        )}
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group controlId="password">
+                                        <Form.Label>Şifre</Form.Label>
+                                        <InputGroup>
+                                            <InputGroup.Text>
+                                                <Lock size={18} />
+                                            </InputGroup.Text>
+                                            <Form.Control
+                                                type={showPassword ? "text" : "password"}
+                                                name="password"
+                                                placeholder="En az 8 karakter"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                required
+                                                minLength={8}
+                                            />
+                                            <Button 
+                                                variant="outline-secondary" 
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </Button>
+                                        </InputGroup>
+                                        <Form.Control.Feedback type="invalid">
+                                            Şifreniz en az 8 karakter olmalıdır.
+                                        </Form.Control.Feedback>
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+
+                            <Form.Group className="mb-4" controlId="agreeTerms">
+                                <Form.Check
+                                    type="checkbox"
+                                    name="agreeTerms"
+                                    label={
+                                        <span>
+                                            <Link to="/terms" className="text-primary">Kullanım şartlarını</Link> ve{' '}
+                                            <Link to="/privacy" className="text-primary">gizlilik politikasını</Link> kabul ediyorum
+                                        </span>
+                                    }
+                                    checked={formData.agreeTerms}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </Form.Group>
+
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                size="lg"
+                                className="w-100"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                ) : (
+                                    <>
+                                        Kayıt Ol <ArrowRight size={18} className="ms-2" />
+                                    </>
+                                )}
+                            </Button>
+                        </Form>
+                    </div>
+                </Col>
+            </Row>
+
+            <style jsx>{`
+                .register-page {
+                    background-color: #f8f9fa;
+                    min-height: 100vh;
+                }
+                
+                .register-sidebar {
+                    background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
+                    color: white;
+                    padding: 2rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: sticky;
+                    top: 0;
+                    height: 100vh;
+                }
+                
+                .register-sidebar-content {
+                    max-width: 400px;
+                    text-align: center;
+                }
+                
+                .logo-icon {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 2rem;
+                }
+                
+                .register-sidebar h1 {
+                    font-weight: 700;
+                    margin-bottom: 1rem;
+                }
+                
+                .register-sidebar .lead {
+                    opacity: 0.9;
+                    margin-bottom: 3rem;
+                }
+                
+                .features {
+                    text-align: left;
+                    margin: 3rem 0;
+                }
+                
+                .feature-item {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                }
+                
+                .feature-icon {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 1rem;
+                }
+                
+                .auth-redirect {
+                    margin-top: 3rem;
+                }
+                
+                .auth-redirect span {
+                    display: block;
+                    margin-bottom: 1rem;
+                }
+                
+                .register-form-col {
+                    background-color: white;
+                    height: 100vh;
+                    overflow-y: auto;
+                }
+                
+                .register-form-container {
+                    max-width: 700px;
+                    margin: 0 auto;
+                    padding: 3rem 2rem;
+                }
+                
+                .register-form-header {
+                    text-align: center;
+                    margin-bottom: 2rem;
+                }
+                
+                .register-form-header h2 {
+                    font-weight: 700;
+                    color: #2c3e50;
+                }
+                
+                .register-form-header p {
+                    color: #7f8c8d;
+                }
+                
+                .age-info {
+                    font-size: 0.875rem;
+                    color: #7f8c8d;
+                    margin-top: 0.5rem;
+                }
+                
+                @media (max-width: 992px) {
+                    .register-sidebar {
+                        position: relative;
+                        height: auto;
+                        padding: 3rem 1rem;
+                    }
+                    
+                    .register-form-col {
+                        height: auto;
+                        overflow-y: visible;
+                    }
+                }
+            `}</style>
+        </div>
     )
 }

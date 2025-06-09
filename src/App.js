@@ -11,10 +11,12 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 import AnnouncementPage from './pages/AnnouncementPage';
 import { AuthProvider } from "./Context/AuthContext";
 import ResetPasswordPage from './pages/ResetPasswordPage';
-
+import PersonPage from './pages/PersonPage';
+import { useState } from "react";
 
 function Appcontent() {
   const location = useLocation();
+  const [facilityId, setFacilityId] = useState(null);
 
   // Bu sayfalarda navbar gösterme
   const hideNavPaths = ["/","/login", "/register","/forgot-password","/reset-password"];
@@ -27,6 +29,7 @@ function Appcontent() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/personal-info" element={<PersonPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />}></Route>
           <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
