@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 //lokaldekki=http://localhost:5021/api/facilities/fields
-const API_URL = 'https://halisaha.up.railway.app/api/facilities/fields ';
+const API_URL = 'https://halisaha.up.railway.app/api/facilities/fields';
 
 
 
@@ -17,22 +17,21 @@ export const getAllFields = async () => {
 
 
 export const getFields = async (facilityId) => {
-  if (!facilityId) throw new Error("FieldId gerekli!");
-//(`${API_URL}/${fieldId}`);
-    try {
-        const { data } = await axios.get(`${API_URL}?facilityId=${facilityId}`);//
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error("Sahaları çekerken hata:", error);
-        throw error;
-    }
+  if (!facilityId) throw new Error("FacilityId parametresi zorunludur!");
+
+  try {
+    const { data } = await axios.get(`${API_URL}?facilityId=${facilityId}`);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Sahaları çekerken hata oluştu:", error);
+    throw error;
+  }
 };
 export const createField = async (fieldData) => {
   const formData = new FormData();
 
   for (const key in fieldData) {
     if (Array.isArray(fieldData[key])) {
-      // Eğer dizi ise (örneğin fields, equipments)
       fieldData[key].forEach((item, index) => {
         formData.append(`${key}[${index}]`, item);
       });
@@ -42,16 +41,12 @@ export const createField = async (fieldData) => {
   }
 
   try {
-    const { data } = await axios.post(API_URL, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
+    // Burada header'da content-type ayarlanmaz, axios otomatik yapar
+    const { data } = await axios.post(API_URL, formData);
     return data;
   } catch (error) {
     console.error("❌ Saha ekleme başarısız:", error.response?.data || error.message);
-    throw error;  // Hata fırlatıyoruz ki üst katmanda yakalanabilsin
+    throw error;
   }
 };
 

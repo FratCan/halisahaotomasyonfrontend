@@ -28,7 +28,7 @@ const WEEK_DAYS = [
   "Sunday",
 ];
 
-function FieldsPage({ facilityId }) {
+function FieldsPage({ facilityId ,setFacilityId }) {
   console.log("FieldsPage rendered with facilityId:", facilityId);
   const [fields, setFields] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -43,23 +43,29 @@ function FieldsPage({ facilityId }) {
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [fieldNameToDelete, setFieldNameToDelete] = useState("");
 
-  // useEffect içinde facilityId kontrolü ekle
+  // localStorage'dan id'yi al
+  useEffect(() => {
+    const idFromStorage = localStorage.getItem("selectedFacilityId");
+    console.log("Local'dan gelen id:", idFromStorage);
+    if (idFromStorage) setFacilityId(idFromStorage);
+  }, []);
+
+  // id geldikten sonra verileri çek
   useEffect(() => {
     if (facilityId) {
+      console.log("Veri çekiliyor, id:", facilityId);
       fetchFields();
     }
   }, [facilityId]);
 
   const fetchFields = async () => {
     try {
-      if (!facilityId) return; // facilityId yoksa fetch etme
       const data = await getFields(facilityId);
       setFields(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Fields çekilemedi:", err);
     }
   };
-
   // Düzenle butonuna tıklayınca
   const handleEditClick = (id) => {
     const fresh = fields.find((f) => f.id === id);
@@ -163,7 +169,7 @@ function FieldsPage({ facilityId }) {
 
     const form = e.target;
     const data = {
-      facilityId: facilityId, // Burada facilityId kesinlikle undefined olmamalı!
+      facilityId: facilityId,
       name: form.name.value,
       startTime: `${form.StartTime.value}`,
       endTime: `${form.EndTime.value}`,
@@ -183,10 +189,9 @@ function FieldsPage({ facilityId }) {
     console.log("🔄 Adding fields", data);
 
     try {
-      // 1. Önce yeni tesisi oluştur
       const newField = await createField(data);
 
-      // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
+      // Fotoğraf varsa yükle
       if (photoFile) {
         const formData = new FormData();
         formData.append("photo", photoFile);
@@ -195,10 +200,10 @@ function FieldsPage({ facilityId }) {
         console.log("✅ Fotoğraf yüklendi.");
       }
 
-      // 3. Güncel listeyi çek
+      // 🚀 Fields'ı güncelle
       await fetchFields();
 
-      // 4. Modalı kapat
+      // Modalı kapat
       handleCloseModal();
     } catch (err) {
       console.error(
@@ -207,7 +212,6 @@ function FieldsPage({ facilityId }) {
       );
     }
   };
-
   // Var olan saha güncelleme
   const handleFieldUpdate = async (e) => {
     e.preventDefault();

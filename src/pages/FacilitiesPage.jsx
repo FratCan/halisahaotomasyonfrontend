@@ -44,7 +44,9 @@ function FacilitiesPage() {
     const fresh = facilities.find((f) => f.id === id);
     setSelectedFacility(fresh);
     setPhotoPreview(
-      fresh.photoUrls?.[0] ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}` : ""
+      fresh.photoUrls?.[0]
+        ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
+        : ""
     );
 
     setIsCreating(false);
@@ -96,6 +98,12 @@ function FacilitiesPage() {
       // 1. Önce yeni tesisi oluştur
       const newFacility = await createFacility(facilityData);
 
+      // 🌟 facilityId'yi localStorage'a kaydet
+      localStorage.setItem("selectedFacilityId", newFacility.id);
+      console.log(
+        "📦 selectedFacilityId localStorage'a kaydedildi:",
+        newFacility.id
+      );
       // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
       if (photoFile) {
         const formData = new FormData();
@@ -118,57 +126,56 @@ function FacilitiesPage() {
     }
   };
 
-const handleFacilityUpdate = async (e) => {
-  e.preventDefault();
-  if (!selectedFacility) return;
+  const handleFacilityUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedFacility) return;
 
-  const elems = e.target.elements;
+    const elems = e.target.elements;
 
-  const updatedData = {
-    name: elems.name.value,
-    email: elems.email.value,
-    location: elems.location.value,
-    addressDetails: elems.addressDetails.value,
-    phone: elems.phone.value,
-    bankAccountInfo: elems.bankAccountInfo.value,
-    city: elems.city.value,
-    town: elems.town.value,
-    description: elems.description.value,
-    hasCafeteria: elems.hasCafeteria.checked,
-    hasShower: elems.hasShower.checked,
-    hasToilet: elems.hasToilet.checked,
-    hasSecurityCameras: elems.hasSecurityCameras.checked,
-    hasTransportService: elems.hasTransportService.checked,
-    hasParking: elems.hasParking.checked,
-    fields: [],
-    equipments: [],
-    photoUrls: selectedFacility.photoUrls || [],
-  };
+    const updatedData = {
+      name: elems.name.value,
+      email: elems.email.value,
+      location: elems.location.value,
+      addressDetails: elems.addressDetails.value,
+      phone: elems.phone.value,
+      bankAccountInfo: elems.bankAccountInfo.value,
+      city: elems.city.value,
+      town: elems.town.value,
+      description: elems.description.value,
+      hasCafeteria: elems.hasCafeteria.checked,
+      hasShower: elems.hasShower.checked,
+      hasToilet: elems.hasToilet.checked,
+      hasSecurityCameras: elems.hasSecurityCameras.checked,
+      hasTransportService: elems.hasTransportService.checked,
+      hasParking: elems.hasParking.checked,
+      fields: [],
+      equipments: [],
+      photoUrls: selectedFacility.photoUrls || [],
+    };
 
-  console.log("🔄 Updating facility", selectedFacility.id, updatedData);
+    console.log("🔄 Updating facility", selectedFacility.id, updatedData);
 
-  try {
-    // Fotoğraf varsa yükle
-    if (photoFile) {
-      const photoFormData = new FormData();
-      photoFormData.append("photo", photoFile);
-      await uploadFacilityPhotos(selectedFacility.id, photoFormData);
-      console.log("✅ Fotoğraf yüklendi.");
+    try {
+      // Fotoğraf varsa yükle
+      if (photoFile) {
+        const photoFormData = new FormData();
+        photoFormData.append("photo", photoFile);
+        await uploadFacilityPhotos(selectedFacility.id, photoFormData);
+        console.log("✅ Fotoğraf yüklendi.");
+      }
+
+      // Diğer alanları update et
+      await updateFacility(selectedFacility.id, updatedData);
+      console.log("✅ Tesis bilgileri güncellendi.");
+
+      // 🔥🔥 Güncel verileri yeniden çek
+      await fetchFacilities(ownerId);
+
+      handleCloseModal();
+    } catch (err) {
+      console.error("❌ Update failed:", err.response?.data || err.message);
     }
-
-    // Diğer alanları update et
-    await updateFacility(selectedFacility.id, updatedData);
-    console.log("✅ Tesis bilgileri güncellendi.");
-
-    // 🔥🔥 Güncel verileri yeniden çek
-    await fetchFacilities(ownerId);
-
-    handleCloseModal();
-  } catch (err) {
-    console.error("❌ Update failed:", err.response?.data || err.message);
-  }
-};
-
+  };
 
   const handleOpenDeleteModal = () => {
     setFacilityNameToDelete("");
@@ -176,25 +183,25 @@ const handleFacilityUpdate = async (e) => {
   };
 
   const handleConfirmDelete = async (e) => {
-  e.preventDefault();
-  const facilityToDelete = facilities.find(
-    (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
-  );
-  if (!facilityToDelete) {
-    alert("Bu isimde bir tesis bulunamadı!");
-    return;
-  }
-  try {
-    await deleteFacility(facilityToDelete.id);
+    e.preventDefault();
+    const facilityToDelete = facilities.find(
+      (f) => f.name.toLowerCase() === facilityNameToDelete.trim().toLowerCase()
+    );
+    if (!facilityToDelete) {
+      alert("Bu isimde bir tesis bulunamadı!");
+      return;
+    }
+    try {
+      await deleteFacility(facilityToDelete.id);
 
-    // 🔥 ownerId parametresini geçirerek fetch yap
-    await fetchFacilities(ownerId);
+      // 🔥 ownerId parametresini geçirerek fetch yap
+      await fetchFacilities(ownerId);
 
-    setShowDeleteModal(false);
-  } catch (err) {
-    console.error("❌ Silme başarısız:", err.response?.data || err.message);
-  }
-};
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error("❌ Silme başarısız:", err.response?.data || err.message);
+    }
+  };
 
   console.log("Facilities verisi:", facilities);
 
@@ -388,7 +395,10 @@ const handleFacilityUpdate = async (e) => {
                       </Form.Group>
                     </Col>
                     <Col>
-                      <Form.Group controlId="hasSecurityCameras" className="mb-2">
+                      <Form.Group
+                        controlId="hasSecurityCameras"
+                        className="mb-2"
+                      >
                         <Form.Check
                           name="hasSecurityCameras"
                           type="checkbox"
@@ -399,12 +409,17 @@ const handleFacilityUpdate = async (e) => {
                         />
                       </Form.Group>
 
-                      <Form.Group controlId="hasTransportService" className="mb-2">
+                      <Form.Group
+                        controlId="hasTransportService"
+                        className="mb-2"
+                      >
                         <Form.Check
                           name="hasTransportService"
                           type="checkbox"
                           label="Ulaşım Hizmeti"
-                          defaultChecked={selectedFacility?.hasTransportService || false}
+                          defaultChecked={
+                            selectedFacility?.hasTransportService || false
+                          }
                         />
                       </Form.Group>
 

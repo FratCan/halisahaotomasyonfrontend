@@ -77,6 +77,7 @@ export const deleteFacility = async (id) => {
     return data;
   };
 //https://halisaha.up.railway.app/api/Facilities/1/photos
+
 export const uploadFacilityPhotos = async (id, photoFiles) => {
       const formData = new FormData();
       photoFiles.forEach(file => {

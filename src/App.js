@@ -34,7 +34,11 @@ function Appcontent() {
           <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/facility" element={<ProtectedRoute><FacilitiesPage /></ProtectedRoute>} />
-          <Route path="/fields" element={<ProtectedRoute><FieldsPage /></ProtectedRoute>} />
+          <Route path="/fields" element={
+              <ProtectedRoute>
+                <FieldsPage facilityId={facilityId} setFacilityId={setFacilityId} />
+              </ProtectedRoute>}
+          />
           <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
           <Route path="/announcement" element={<ProtectedRoute><AnnouncementPage/></ProtectedRoute>}/>
       </Routes>
