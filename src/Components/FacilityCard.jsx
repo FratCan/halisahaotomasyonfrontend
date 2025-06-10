@@ -8,7 +8,7 @@ import {
   updateEquipment,
 } from "../api/EquipmentsApi";
 
-const FacilityCard = ({ facility, onEdit }) => {
+const FacilityCard = ({ facility, onEdit, onViewFields }) => {
   const [equipments, setEquipments] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -197,13 +197,21 @@ const FacilityCard = ({ facility, onEdit }) => {
               </div>
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Kamera:</strong>
-                <span style={{ color: facility.hasSecurityCameras ? "green" : "red" }}>
+                <span
+                  style={{
+                    color: facility.hasSecurityCameras ? "green" : "red",
+                  }}
+                >
                   {facility.hasSecurityCameras ? "Evet" : "Hayır"}
                 </span>
               </div>
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Ulaşım:</strong>
-                <span style={{ color: facility.hasTransportService ? "green" : "red" }}>
+                <span
+                  style={{
+                    color: facility.hasTransportService ? "green" : "red",
+                  }}
+                >
                   {facility.hasTransportService ? "Evet" : "Hayır"}
                 </span>
               </div>
@@ -221,6 +229,14 @@ const FacilityCard = ({ facility, onEdit }) => {
               onClick={() => onEdit(facility)}
             >
               Düzenle
+            </Button>
+            <Button
+              variant="info"
+              size="sm"
+              className="mt-2"
+              onClick={() => onViewFields(facility)}
+            >
+              Sahaları Görüntüle
             </Button>
           </Col>
           <Col md={5}>
