@@ -8,7 +8,7 @@
         Card,
         Alert,
     } from "react-bootstrap";
-    import { getAnnouncements, createAnnouncement } from "../api/Announcement";
+    import { getAnnouncements} from "../api/Announcement";
 
     const AnnouncementPage = ({ facilityId }) => {
     console.log("Gelen facilityId:", facilityId);
@@ -41,42 +41,6 @@
 
         fetchAnnouncements();
     }, [facilityId]); // Sadece facilityId'ye bağlı
-
-    const handleSubmit = async () => {
-        if (!facilityId) {
-        setError("Tesis ID'si bulunamadı!");
-        return;
-        }
-
-        if (!title.trim() || !text.trim()) {
-        setError("Lütfen hem başlık hem de metin girin.");
-        return;
-        }
-
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("content", text);
-        formData.append("endTime", endDate || "");
-        if (image) {
-        formData.append("bannerUrl", image);
-        }
-
-        try {
-        const response = await createAnnouncement(facilityId, formData);
-        const newAnnouncement = response.data; // API yapınıza göre bu kısım değişebilir
-
-        setAnnouncements((prev) => [newAnnouncement, ...prev]);
-        setTitle("");
-        setText("");
-        setEndDate("");
-        setImage(null);
-        setImagePreview(null);
-        setError("");
-        } catch (err) {
-        console.error("Duyuru gönderilemedi:", err);
-        setError(`Duyuru gönderilemedi: ${err.message}`);
-        }
-    };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -138,89 +102,6 @@
     return (
         <Container className="mt-5">
         <Row className="g-5">
-            <Col>
-            <h4 className="mb-4">Duyuru Oluştur</h4>
-            <Form>
-                {error && <Alert variant="danger">{error}</Alert>}
-
-                <Form.Group controlId="announcementTitle" className="mb-3">
-                <Form.Control
-                    type="text"
-                    placeholder="Duyuru başlığı girin..."
-                    value={editingIndex !== null ? editedTitle : title}
-                    onChange={(e) =>
-                    editingIndex !== null
-                        ? setEditedTitle(e.target.value)
-                        : setTitle(e.target.value)
-                    }
-                />
-                </Form.Group>
-
-                <Form.Group controlId="announcementText" className="mb-3">
-                <Form.Control
-                    as="textarea"
-                    placeholder="Metninizi buraya yazın..."
-                    value={editingIndex !== null ? editedText : text}
-                    onChange={(e) =>
-                    editingIndex !== null
-                        ? setEditedText(e.target.value)
-                        : setText(e.target.value)
-                    }
-                    style={{
-                    height: "200px",
-                    resize: "none",
-                    borderRadius: "10px",
-                    }}
-                />
-                </Form.Group>
-
-                <Form.Group controlId="announcementImage" className="mb-3">
-                <Form.Label>Fotoğraf Ekle (isteğe bağlı)</Form.Label>
-                <Form.Control
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                />
-                </Form.Group>
-
-                <Form.Group controlId="announcementEndDate" className="mb-3">
-                <Form.Label>Bitiş Tarihi</Form.Label>
-                <Form.Control
-                    type="date"
-                    value={editingIndex !== null ? editedEndDate : endDate}
-                    onChange={(e) =>
-                    editingIndex !== null
-                        ? setEditedEndDate(e.target.value)
-                        : setEndDate(e.target.value)
-                    }
-                />
-                </Form.Group>
-
-                {imagePreview && (
-                <div className="mb-3">
-                    <img
-                    src={imagePreview}
-                    alt="Önizleme"
-                    style={{
-                        maxWidth: "100%",
-                        maxHeight: "300px",
-                        borderRadius: "10px",
-                    }}
-                    />
-                </div>
-                )}
-
-                <Button
-                variant="success"
-                onClick={
-                    editingIndex !== null ? saveEditedAnnouncement : handleSubmit
-                }
-                >
-                {editingIndex !== null ? "Kaydet" : "Oluştur"}
-                </Button>
-            </Form>
-            </Col>
-
             <Col>
             <h4>Duyurular</h4>
             <div style={{ maxHeight: "500px", overflowY: "auto" }}>

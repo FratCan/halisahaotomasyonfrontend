@@ -1,6 +1,12 @@
 import { Card, Button, Row, Col, Modal, Form } from "react-bootstrap";
 import React, { useState, useEffect } from "react";
-
+import {
+  createAnnouncement,
+  getAnnouncements,
+  deleteAnnouncementById,
+  updateAnnouncement,
+  uploadAnnouncementPhotos
+} from "../api/Announcement";
 import {
   getEquipments,
   deleteEquipment,
@@ -8,7 +14,55 @@ import {
   updateEquipment,
 } from "../api/EquipmentsApi";
 
-const FacilityCard = ({ facility, onEdit }) => {
+const FacilityCard = ({ facility, onEdit, facilityId,onViewFields }) => {
+  const [announcements, setAnnouncements] = useState([]);
+  const [error, setError] = useState("");
+  const [openIndex, setOpenIndex] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedText, setEditedText] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [editedEndDate, setEditedEndDate] = useState("");
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const [showAllAnnouncementsModal, setShowAllAnnouncementsModal] =
+    useState(false);
+  const [showAddAnnouncementModal, setShowAddAnnouncementModal] =
+    useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    content: "",
+    quantity: "",
+    description: "",
+    isRentable: false,
+  });
+
+  const fetchAnnouncements = async () => {
+    if (!facility?.id) return;
+    try {
+      const data = await getAnnouncements(facility.id);
+      console.log("getAnnouncements gelen veri:", data);
+      setAnnouncements(data);
+    } catch (err) {
+      console.error("Duyurular alınamadı:", err);
+    }
+  };
+
+  const handleCreateClick = () => {
+    setShowAddAnnouncementModal(true);
+    setEditingIndex(null);
+    setNewAnnouncement({
+      title: "",
+      content: "",
+      quantity: "",
+      description: "",
+      isRentable: false,
+    });
+    setImage(null);
+    setImagePreview(null);
+    setEndDate("");
+  };
   const [equipments, setEquipments] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -35,6 +89,140 @@ const FacilityCard = ({ facility, onEdit }) => {
       fetchEquipments();
     }
   }, [facility?.id]); // <<< BURADA DA facility.id'ye bağımlı olsun
+  const handleDeleteAnnouncement = async (announcementId) => {
+    try {
+      await deleteAnnouncementById(announcementId);
+      setAnnouncements((prev) => prev.filter((a) => a.id !== announcementId));
+    } catch (err) {
+      console.error("Duyuru silinemedi:", err);
+    }
+  };
+
+const handleSubmit = async () => {
+  if (!facility?.id) {
+    setError("Tesis ID'si bulunamadı!");
+    return;
+  }
+
+  if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
+    setError("Lütfen hem başlık hem de içerik girin.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("title", newAnnouncement.title);
+  formData.append("content", newAnnouncement.content);
+  formData.append("endTime", endDate || "");
+
+  try {
+    // 1. Ana duyuruyu kaydet
+    const response = await createAnnouncement(facility.id, formData);
+    const created = response.data || response;
+
+    // 2. Görsel varsa ayrı yükle
+    if (created?.id && image) {
+      await uploadAnnouncementPhotos(created.id, [image]);
+    }
+
+    // 3. Listeye ekle ve formu sıfırla
+    setAnnouncements((prev) => [created, ...prev]);
+    setShowAddAnnouncementModal(false);
+    setNewAnnouncement({
+      facilityId: facilityId,
+      title: "",
+      content: "",
+      quantity: "",
+      description: "",
+      isRentable: false,
+    });
+    setEndDate("");
+    setImage(null);
+    setImagePreview(null);
+    setError("");
+  } catch (err) {
+    console.error("Duyuru gönderilemedi:", err);
+    setError(`Duyuru gönderilemedi: ${err.message}`);
+  }
+};
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+
+      // Önizleme oluştur
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImage(null);
+      setImagePreview(null);
+    }
+  };
+
+  const toggleCard = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
+  const deleteAnnouncement = (idx) => {
+    setAnnouncements(announcements.filter((_, i) => i !== idx));
+    if (openIndex === idx) setOpenIndex(null);
+  };
+
+  const editAnnouncement = (idx) => {
+    const ann = announcements[idx];
+    setEditingIndex(idx);
+    setEditedTitle(ann.title);
+    setEditedText(ann.content);
+    setEditedEndDate(ann.endTime ?? "");
+    setImagePreview(ann.bannerUrl ?? "");
+  };
+
+  const saveEditedAnnouncement = async () => {
+    const editedAnnouncement = announcements[editingIndex];
+    if (!editedAnnouncement?.id) {
+      console.error("Güncellenecek duyuru bulunamadı.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", editedTitle);
+    formData.append("content", editedText);
+    formData.append("endTime", editedEndDate || "");
+    if (image) {
+      formData.append("bannerUrl", image);
+    }
+
+    try {
+      const updated = await updateAnnouncement(editedAnnouncement.id, formData);
+
+      // local state'i güncelle
+      const newAnnouncements = announcements.map((ann, i) =>
+        i === editingIndex ? updated : ann
+      );
+      setAnnouncements(newAnnouncements);
+
+      // form ve state sıfırla
+      setEditingIndex(null);
+      setEditedTitle("");
+      setEditedText("");
+      setEditedEndDate("");
+      setImage(null);
+      setImagePreview(null);
+      setNewAnnouncement({
+        title: "",
+        content: "",
+        quantity: "",
+        description: "",
+        isRentable: false,
+      });
+      setShowAddAnnouncementModal(false);
+    } catch (error) {
+      console.error("Güncelleme sırasında hata:", error);
+    }
+  };
 
   const handleDelete = async (equipmentId) => {
     if (!facility?.id) {
@@ -132,7 +320,6 @@ const FacilityCard = ({ facility, onEdit }) => {
               }}
             />
           </Col>
-
           <Col md={4}>
             <Card.Title
               style={{
@@ -197,13 +384,21 @@ const FacilityCard = ({ facility, onEdit }) => {
               </div>
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Kamera:</strong>
-                <span style={{ color: facility.hasSecurityCameras ? "green" : "red" }}>
+                <span
+                  style={{
+                    color: facility.hasSecurityCameras ? "green" : "red",
+                  }}
+                >
                   {facility.hasSecurityCameras ? "Evet" : "Hayır"}
                 </span>
               </div>
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Ulaşım:</strong>
-                <span style={{ color: facility.hasTransportService ? "green" : "red" }}>
+                <span
+                  style={{
+                    color: facility.hasTransportService ? "green" : "red",
+                  }}
+                >
                   {facility.hasTransportService ? "Evet" : "Hayır"}
                 </span>
               </div>
@@ -214,14 +409,40 @@ const FacilityCard = ({ facility, onEdit }) => {
                 </span>
               </div>
             </Card.Text>
-
-            <Button
-              variant="primary"
-              style={{ width: "100%" }}
-              onClick={() => onEdit(facility)}
+            <div className="d-flex gap-2">
+              <Button
+                variant="primary"
+                style={{ flex: 1 }}
+                onClick={() => onEdit(facility)}
+              >
+                Düzenle
+              </Button>
+              <Button
+              variant="info"
+              size="sm"
+              className="mt-2"
+              onClick={() => onViewFields(facility)}
             >
-              Düzenle
+              Sahaları Görüntüle
             </Button>
+              <Button
+                variant="success"
+                style={{ flex: 1 }}
+                onClick={handleCreateClick}
+              >
+                Duyuru ekle
+              </Button>
+              <Button
+                variant="info"
+                style={{ flex: 1 }}
+                onClick={() => {
+                  fetchAnnouncements();
+                  setShowAllAnnouncementsModal(true);
+                }}
+              >
+                Duyuruları Görüntüle
+              </Button>
+            </div>
           </Col>
           <Col md={5}>
             <div className="d-flex justify-content-between align-items-center mb-2">
@@ -287,6 +508,156 @@ const FacilityCard = ({ facility, onEdit }) => {
             </Card.Text>
           </Col>
         </Row>
+
+        <Modal
+          show={showAllAnnouncementsModal}
+          onHide={() => setShowAllAnnouncementsModal(false)}
+          size="lg"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Tüm Duyurular</Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ maxHeight: "500px", overflowY: "auto" }}>
+            {announcements.length === 0 && <p>Henüz duyuru yok.</p>}
+            {announcements.filter(Boolean).map((ann, idx) => (
+              <Card key={ann.id} className="mb-3">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <Card.Title>{ann.title ?? "Başlık yok"}</Card.Title>
+                      <Card.Text>{ann.content ?? "İçerik yok"}</Card.Text>
+                      {ann.endTime && (
+                        <small className="text-muted">
+                          Bitiş: {new Date(ann.endTime).toLocaleDateString()}
+                        </small>
+                      )}
+                    </div>
+                    <div className="d-flex gap-2">
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        onClick={() => {
+                          setEditingIndex(idx);
+                          setNewAnnouncement({
+                            title: ann.title ?? "",
+                            content: ann.content ?? "",
+                            quantity: "", // kullanılmıyor ama boş geç
+                            description: "", // aynı şekilde
+                            isRentable: false,
+                          });
+                          setEditedEndDate(ann.endTime ?? "");
+                          setImagePreview(ann.bannerUrl ?? "");
+                          setShowAddAnnouncementModal(true);
+                          setShowAllAnnouncementsModal(false);
+                        }}
+                      >
+                        Düzenle
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteAnnouncement(ann.id)}
+                      >
+                        Sil
+                      </Button>
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            ))}
+          </Modal.Body>
+        </Modal>
+
+        {/* Duyurular Ekle Modalı */}
+        <Modal
+          show={showAddAnnouncementModal}
+          onHide={() => setShowAddAnnouncementModal(false)}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Duyuru Ekle</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Duyuru Başlığı</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newAnnouncement.title}
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      title: e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Duyuru İçeriği</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={newAnnouncement.content}
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      content: e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+
+              <Form.Group controlId="announcementImage" className="mb-3">
+                <Form.Label>Fotoğraf Ekle (isteğe bağlı)</Form.Label>
+                <Form.Control
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </Form.Group>
+
+              <Form.Group controlId="announcementEndDate" className="mb-3">
+                <Form.Label>Bitiş Tarihi</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={
+                    editingIndex !== null
+                      ? editedEndDate?.slice(0, 10)
+                      : endDate
+                  }
+                  onChange={(e) =>
+                    editingIndex !== null
+                      ? setEditedEndDate(e.target.value)
+                      : setEndDate(e.target.value)
+                  }
+                />
+              </Form.Group>
+
+              {imagePreview && (
+                <div className="mb-3">
+                  <img
+                    src={imagePreview}
+                    alt="Önizleme"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "300px",
+                      borderRadius: "10px",
+                    }}
+                  />
+                </div>
+              )}
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="success"
+              onClick={
+                editingIndex !== null ? saveEditedAnnouncement : handleSubmit
+              }
+            >
+              {editingIndex !== null ? "Kaydet" : "Oluştur"}
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
         {/* Ekipman Ekle Modalı */}
         <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
