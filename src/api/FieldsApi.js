@@ -28,27 +28,19 @@ export const getFields = async (facilityId) => {
   }
 };
 export const createField = async (fieldData) => {
-  const formData = new FormData();
-
-  for (const key in fieldData) {
-    if (Array.isArray(fieldData[key])) {
-      fieldData[key].forEach((item, index) => {
-        formData.append(`${key}[${index}]`, item);
-      });
-    } else {
-      formData.append(key, fieldData[key]);
-    }
-  }
-
   try {
-    // Burada header'da content-type ayarlanmaz, axios otomatik yapar
-    const { data } = await axios.post(API_URL, formData);
+    const { data } = await axios.post(API_URL, fieldData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     return data;
   } catch (error) {
     console.error("❌ Saha ekleme başarısız:", error.response?.data || error.message);
     throw error;
   }
 };
+
 
 export const updateField = async (id,fieldData) => {
   const isFormData = fieldData instanceof FormData;

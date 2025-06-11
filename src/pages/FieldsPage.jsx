@@ -17,6 +17,8 @@ import {
   uploadFieldPhotos,
 } from "../api/FieldsApi";
 
+import { getFacilities } from "../api/FacilityApi";
+
 // Haftanın günlerini sabit tutuyoruz
 const WEEK_DAYS = [
   "Monday",
@@ -28,7 +30,7 @@ const WEEK_DAYS = [
   "Sunday",
 ];
 
-function FieldsPage({ facilityId ,setFacilityId }) {
+function FieldsPage({ facilityId, setFacilityId }) {
   console.log("FieldsPage rendered with facilityId:", facilityId);
   const [fields, setFields] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -42,6 +44,37 @@ function FieldsPage({ facilityId ,setFacilityId }) {
   const [formAvailable, setFormAvailable] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [fieldNameToDelete, setFieldNameToDelete] = useState("");
+  const [facilities, setFacilities] = useState([]);
+
+  const [weeklyOpenings, setWeeklyOpenings] = useState(
+    WEEK_DAYS.map((_, i) => ({
+      dayOfWeek: i,
+      startTime: "08:00:00",
+      endTime: "23:00:00",
+    }))
+  );
+
+  const [exceptions, setExceptions] = useState([]);
+
+  // OwnerId'yi localStorage'dan al
+  const ownerId = Number(localStorage.getItem("userId"));
+
+  useEffect(() => {
+    if (ownerId) {
+      fetchFacilities(ownerId);
+    }
+  }, [ownerId]);
+
+  const fetchFacilities = async (ownerId) => {
+    try {
+      // Belirli bir id'ye ait tesisi çekmek için id parametresi gönderin
+      const data = await getFacilities(ownerId);
+      console.log(data);
+      setFacilities(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Facility çekilemedi:", err);
+    }
+  };
 
   // localStorage'dan id'yi al
   useEffect(() => {
@@ -71,16 +104,43 @@ function FieldsPage({ facilityId ,setFacilityId }) {
     const fresh = fields.find((f) => f.id === id);
     setSelectedField(fresh);
     setPhotoPreview(
-      fresh.photoUrls?.[0] ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}` : ""
+      fresh.photoUrls?.[0]
+        ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
+        : ""
+    );
+  setWeeklyOpenings(
+  Array.isArray(fresh.weeklyOpenings)
+    ? fresh.weeklyOpenings.map((w) => ({
+        dayOfWeek: w.dayOfWeek,
+        startTime: w.startTime,
+        endTime: w.endTime,
+      }))
+    : WEEK_DAYS.map((_, i) => ({
+        dayOfWeek: i,
+        startTime: "08:00:00",
+        endTime: "23:00:00",
+      }))
+);
+
+
+    setExceptions(
+      Array.isArray(fresh.exceptions)
+        ? fresh.exceptions.map((ex) => ({
+            date: ex.date?.slice(0, 10),
+            isOpen: ex.isOpen,
+          }))
+        : []
     );
 
     const newDaysAvailable = WEEK_DAYS.reduce(
       (acc, day) => ({
         ...acc,
-        [day]: fresh.openingDays.includes(day),
+        [day]:
+          Array.isArray(fresh.openingDays) && fresh.openingDays.includes(day),
       }),
       {}
     );
+
     setDaysAvailable(newDaysAvailable);
     setFormAvailable(fresh.isAvailable);
     setIsCreateMode(false);
@@ -171,8 +231,6 @@ function FieldsPage({ facilityId ,setFacilityId }) {
     const data = {
       facilityId: facilityId,
       name: form.name.value,
-      startTime: `${form.StartTime.value}`,
-      endTime: `${form.EndTime.value}`,
       pricePerHour: Number(form.price.value),
       capacity: Number(form.capacity.value),
       width: Number(form.width.value),
@@ -182,8 +240,12 @@ function FieldsPage({ facilityId ,setFacilityId }) {
       lightingAvailable: form.lighted.checked,
       isAvailable: formAvailable,
       openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
-      photos: photoFile ? photoFile.name : "",
       floorType: form.floorType.checked ? 1 : 0,
+      weeklyOpenings: weeklyOpenings,
+      exceptions: exceptions.map((ex) => ({
+        date: new Date(ex.date).toISOString(),
+        isOpen: ex.isOpen ?? false,
+      })),
     };
 
     console.log("🔄 Adding fields", data);
@@ -219,8 +281,6 @@ function FieldsPage({ facilityId ,setFacilityId }) {
     const form = e.target.elements;
     const updatedData = {
       name: form.name.value,
-      startTime: `${form.StartTime.value}`,
-      endTime: `${form.EndTime.value}`,
       pricePerHour: Number(form.price.value),
       capacity: Number(form.capacity.value),
       width: Number(form.width.value),
@@ -232,6 +292,11 @@ function FieldsPage({ facilityId ,setFacilityId }) {
       openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
       photoUrls: selectedField.photoUrls || [],
       floorType: form.floorType.checked ? 1 : 0,
+      weeklyOpenings: weeklyOpenings,
+      exceptions: exceptions.map((ex) => ({
+        date: new Date(ex.date).toISOString(),
+        isOpen: ex.isOpen ?? false,
+      })),
     };
 
     console.log("🔄 Updating field", selectedField.id, updatedData);
@@ -281,6 +346,24 @@ function FieldsPage({ facilityId ,setFacilityId }) {
     <>
       <Container style={{ padding: 40 }}>
         <h2 className="text-center my-4">Saha Bilgisi</h2>
+        <Form.Group className="mb-4" controlId="facilitySelector">
+          <Form.Label>Bir Tesis Seçin:</Form.Label>
+          <Form.Select
+            value={facilityId || ""}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              setFacilityId(selectedId);
+              localStorage.setItem("selectedFacilityId", selectedId);
+            }}
+          >
+            <option value="">Tesis Seçin</option>
+            {facilities.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
 
         {/* Mevcut Sahaları Listele */}
         {Array.from({ length: Math.ceil(fields.length / 3) }).map((_, ri) => (
@@ -313,7 +396,12 @@ function FieldsPage({ facilityId ,setFacilityId }) {
           >
             Saha Sil
           </Button>
-          <Button variant="success" onClick={handleCreateClick} type="button">
+          <Button
+            variant="success"
+            onClick={handleCreateClick}
+            type="button"
+            disabled={!facilityId}
+          >
             Yeni Saha Ekle
           </Button>
         </div>
@@ -404,37 +492,6 @@ function FieldsPage({ facilityId ,setFacilityId }) {
                   </Form.Group>
                 </Col>
               </Row>
-
-              {/* Saatler */}
-              {/* Başlangıç Saati */}
-              <Form.Group controlId="StartTime" className="mt-2">
-                <Form.Label>Başlangıç Saati</Form.Label>
-                <Form.Select
-                  name="StartTime"
-                  defaultValue={selectedField.StartTime || "08:00"}
-                >
-                  {hourOptions.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {hour}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-
-              {/* Bitiş Saati */}
-              <Form.Group controlId="EndTime" className="mt-2">
-                <Form.Label>Bitiş Saati</Form.Label>
-                <Form.Select
-                  name="EndTime"
-                  defaultValue={selectedField.EndTime || "23:00"}
-                >
-                  {hourOptions.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {hour}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
               {/* Fiyat */}
               <Form.Group controlId="price" className="mt-2">
                 <Form.Label>Fiyat</Form.Label>
@@ -444,6 +501,115 @@ function FieldsPage({ facilityId ,setFacilityId }) {
                   defaultValue={selectedField.pricePerHour}
                 />
               </Form.Group>
+
+<h5 className="mt-3">🗓️ Haftalık Açılış Saatleri</h5>
+
+{weeklyOpenings.map((item, index) => (
+  <Row key={index} className="mb-2 align-items-center">
+    <Col md={3}>
+      <Form.Label className="fw-semibold">
+        {WEEK_DAYS[item.dayOfWeek]}
+      </Form.Label>
+    </Col>
+
+    <Col md={3}>
+      <Form.Control
+        type="time"
+        value={item.startTime?.slice(0, 5) || ""}
+        onChange={(e) => {
+          const updated = [...weeklyOpenings];
+          updated[index].startTime = e.target.value + ":00";
+          setWeeklyOpenings(updated);
+        }}
+      />
+    </Col>
+
+    <Col md={3}>
+      <Form.Control
+        type="time"
+        value={item.endTime?.slice(0, 5) || ""}
+        onChange={(e) => {
+          const updated = [...weeklyOpenings];
+          updated[index].endTime = e.target.value + ":00";
+          setWeeklyOpenings(updated);
+        }}
+      />
+    </Col>
+
+    <Col md={3}>
+      <Button
+        variant="danger"
+        onClick={() => {
+          const updated = weeklyOpenings.filter((_, i) => i !== index);
+          setWeeklyOpenings(updated);
+        }}
+        disabled={weeklyOpenings.length <= 1}
+      >
+        Sil
+      </Button>
+    </Col>
+  </Row>
+))}
+
+<Button
+  variant="secondary"
+  className="mt-2"
+  onClick={() => {
+    const usedDays = weeklyOpenings.map((x) => x.dayOfWeek);
+    const nextDay = WEEK_DAYS.findIndex((_, i) => !usedDays.includes(i));
+    if (nextDay !== -1) {
+      setWeeklyOpenings([
+        ...weeklyOpenings,
+        {
+          dayOfWeek: nextDay,
+          startTime: "08:00:00",
+          endTime: "23:00:00",
+        },
+      ]);
+    }
+  }}
+  disabled={weeklyOpenings.length >= 7}
+>
+  + Gün Ekle
+</Button>
+
+
+              <h5 className="mt-4">📌 Kapalı Günler</h5>
+              {exceptions.map((ex, i) => (
+                <Row key={i} className="mb-2">
+                  <Col md={8}>
+                    <Form.Control
+                      type="date"
+                      value={ex.date}
+                      onChange={(e) => {
+                        const updated = [...exceptions];
+                        updated[i].date = e.target.value;
+                        setExceptions(updated);
+                      }}
+                    />
+                  </Col>
+                  <Col md={4}>
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        const filtered = exceptions.filter((_, j) => j !== i);
+                        setExceptions(filtered);
+                      }}
+                    >
+                      Kaldır
+                    </Button>
+                  </Col>
+                </Row>
+              ))}
+              <Button
+                variant="secondary"
+                className="mt-2"
+                onClick={() =>
+                  setExceptions([...exceptions, { date: "", isOpen: false }])
+                }
+              >
+                + Kapalı Gün Ekle
+              </Button>
 
               {/* Checkbox’lar */}
               <Form.Group as={Row} controlId="indoor" className="mt-3">
@@ -559,10 +725,17 @@ function FieldsPage({ facilityId ,setFacilityId }) {
               {deleteError && <p className="text-danger">{deleteError}</p>}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+              >
                 İptal
               </Button>
-              <Button variant="danger" type="submit" disabled={!fieldNameToDelete}>
+              <Button
+                variant="danger"
+                type="submit"
+                disabled={!fieldNameToDelete}
+              >
                 Sil
               </Button>
             </Modal.Footer>

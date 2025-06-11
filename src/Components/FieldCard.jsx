@@ -1,7 +1,15 @@
 // Components/FieldCard.js
 import React from "react";
 import { Card, Button, Row, Col } from "react-bootstrap";
-
+const WEEK_DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 function FieldCard({ field, onEdit, showEditButton }) {
   const isAvailable = field.available ?? field.isAvailable;
 
@@ -34,7 +42,7 @@ function FieldCard({ field, onEdit, showEditButton }) {
           variant="top"
           src={
             field.photoUrls?.[0]
-              ? `http://localhost:5021/${field.photoUrls[0]}`
+              ? `https://halisaha.up.railway.app/${field.photoUrls[0]}`
               : ""
           }
           alt={field.name}
@@ -45,7 +53,6 @@ function FieldCard({ field, onEdit, showEditButton }) {
         <div className="d-flex justify-content-between px-3 py-3">
           {/* SAAT ve AYDINLATMA */}
           <Card.Text className="fs-5 m-0 align-self-start">
-            ⏰ {field.startTime?.slice(0, 5)} - {field.endTime?.slice(0, 5)}
             <br />
             {field.lightingAvailable ? "💡 Lighted" : "🌑 Not lighted"}
           </Card.Text>
@@ -69,13 +76,12 @@ function FieldCard({ field, onEdit, showEditButton }) {
               <strong>Boyut:</strong> {field.width}m × {field.height}m
             </p>
             <p className="mb-2">
-              <strong>Açık/Kapalı:</strong>{" "}
-              {field.isIndoor ? "Kapalı" : "Açık"}
+              <strong>Açık/Kapalı:</strong> {field.isIndoor ? "Kapalı" : "Açık"}
             </p>
             <p className="mb-2">
               <strong>Kapasite:</strong> {field.capacity} oyuncu
             </p>
-             <p className="mb-2">
+            <p className="mb-2">
               <strong>Kamera:</strong> {field.hasCamera ? "Var" : "Yok"}
             </p>
           </Col>
@@ -85,9 +91,33 @@ function FieldCard({ field, onEdit, showEditButton }) {
             <p className="mb-2">
               <strong>Saha tipi:</strong> {field.floorType}
             </p>
-            <p className="mb-0">
-              <strong>Günler:</strong> {(field.openingDays || []).join(", ")}
+            <p className="mb-2">
+              <strong>Haftalık Saatler:</strong>
+              <br />
+             {(field.weeklyOpenings || []).map((w, idx) => {
+  const dayName = WEEK_DAYS[w.dayOfWeek] ?? `${w.dayOfWeek}`;
+  return (
+    <span key={idx}>
+      {dayName}: {w.startTime?.slice(0, 5)} - {w.endTime?.slice(0, 5)}
+      <br />
+    </span>
+  );
+})}
+
             </p>
+            {field.exceptions?.length > 0 && (
+              <p className="mb-2">
+                <strong>Kapalı Günler</strong>
+                <br />
+                {field.exceptions.map((ex, idx) => (
+                  <span key={idx}>
+                    📅 {new Date(ex.date).toLocaleDateString()}{" "}
+                    {ex.isOpen ? "(Açık)" : "(Kapalı)"}
+                    <br />
+                  </span>
+                ))}
+              </p>
+            )}
           </Col>
         </Row>
 

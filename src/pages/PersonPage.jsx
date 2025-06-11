@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { update_password } from "../api/AuthApi";
-import Button from "react-bootstrap/Button";
+import { 
+  Button, 
+  Container, 
+  Row, 
+  Col, 
+  Card, 
+  Form, 
+  Spinner,
+  ListGroup,
+  Alert 
+} from "react-bootstrap";
+import { FaUser, FaKey, FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
+
 const PersonPage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,6 +23,7 @@ const PersonPage = () => {
     newPassword: "",
   });
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -49,14 +62,22 @@ const PersonPage = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
 
     try {
       await update_password({
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      setPasswordMessage("Şifre başarıyla güncellendi.");
+      setPasswordMessage("Şifre başarıyla güncellendi!");
       setPasswordForm({ currentPassword: "", newPassword: "" });
+      setValidated(false);
     } catch (err) {
       const errorMessage =
         typeof err.response?.data === "object"
@@ -67,96 +88,162 @@ const PersonPage = () => {
     }
   };
 
-  // Error boundary için try/catch ile sarmalayıcı bir render fonksiyonu ekle
-  try {
-    if (loading) return <div className="p-4">Yükleniyor...</div>;
-    if (error) return <div className="p-4 text-red-600">{error}</div>;
-
+  if (loading) {
     return (
-      <div className="max-w-md mx-auto p-5 bg-white rounded shadow">
-        <h2 className="text-xl font-semibold mb-4">Kişisel Bilgiler</h2>
-        <div className="space-y-2 mb-5">
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Ad:</strong> {userData.firstName}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Soyad:</strong> {userData.lastName}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Kullanıcı Adı:</strong> {userData.userName}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Email:</strong> {userData.email}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Rol:</strong> {userData.role}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Şehir:</strong> {userData.city}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>İlçe:</strong> {userData.town}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Doğum Tarihi:</strong>{" "}
-            {new Date(userData.birthday).toLocaleDateString()}
-          </div>
-        </div>
-          <br></br>
-        {/* Şifre Değiştirme Bölümü */}
-        <div className="mt-1">
-          <h3 className="text-lg font-semibold">Şifreyi Değiştir</h3>
-      <br></br>
-          <form onSubmit={handlePasswordChange} className="space-y-3">
-            <div>
-              <label className="block text-sm">Mevcut Şifre</label>
-              <input
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    currentPassword: e.target.value,
-                  })
-                }
-                className="w-full p-1 border rounded m-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm">Yeni Şifre</label>
-              <input
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    newPassword: e.target.value,
-                  })
-                }
-                className="w-full p-1 border rounded m-2"
-                required
-              />
-            </div>
-            <br></br>
-            <Button variant="success" type="submit">
-              Güncelle
-            </Button>
-          </form>
-          {passwordMessage && (
-            <div className="mt-2 text-green-600">{passwordMessage}</div>
-          )}
-        </div>
-      </div>
-    );
-  } catch (err) {
-    // Hata olursa kullanıcıya göster
-    return (
-      <div className="p-4 text-red-600">
-        Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.
-      </div>
+      <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
+        <Spinner animation="border" variant="primary" />
+      </Container>
     );
   }
+
+  if (error) {
+    return (
+      <Container className="mt-5">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="py-5">
+      <Row className="justify-content-center">
+        <Col lg={8}>
+          <h1 className="text-center mb-4">Profil Bilgileri</h1>
+          
+          <Card className="shadow-sm mb-4">
+            <Card.Header className="bg-primary text-white">
+              <FaUser className="me-2" />
+              <strong>Kişisel Bilgiler</strong>
+            </Card.Header>
+            <Card.Body>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">Ad:</Col>
+                    <Col sm={8}>{userData.firstName}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">Soyad:</Col>
+                    <Col sm={8}>{userData.lastName}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">Kullanıcı Adı:</Col>
+                    <Col sm={8}>{userData.userName}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">Email:</Col>
+                    <Col sm={8}>{userData.email}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">Rol:</Col>
+                    <Col sm={8}><span className="badge bg-info">{userData.role}</span></Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">
+                      <FaMapMarkerAlt className="me-1" />
+                      Şehir:
+                    </Col>
+                    <Col sm={8}>{userData.city}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">İlçe:</Col>
+                    <Col sm={8}>{userData.town}</Col>
+                  </Row>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <Row>
+                    <Col sm={4} className="fw-bold">
+                      <FaCalendarAlt className="me-1" />
+                      Doğum Tarihi:
+                    </Col>
+                    <Col sm={8}>{new Date(userData.birthday).toLocaleDateString()}</Col>
+                  </Row>
+                </ListGroup.Item>
+              </ListGroup>
+            </Card.Body>
+          </Card>
+
+          <Card className="shadow-sm">
+            <Card.Header className="bg-success text-white">
+              <FaKey className="me-2" />
+              <strong>Şifre Değiştir</strong>
+            </Card.Header>
+            <Card.Body>
+              <Form noValidate validated={validated} onSubmit={handlePasswordChange}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mevcut Şifre</Form.Label>
+                  <Form.Control
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    required
+                    minLength={6}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Lütfen mevcut şifrenizi giriniz
+                  </Form.Control.Feedback>
+                </Form.Group>
+                
+                <Form.Group className="mb-4">
+                  <Form.Label>Yeni Şifre</Form.Label>
+                  <Form.Control
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    required
+                    minLength={6}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Şifre en az 6 karakter olmalıdır
+                  </Form.Control.Feedback>
+                  <Form.Text muted>
+                    Şifreniz en az 6 karakter uzunluğunda olmalıdır
+                  </Form.Text>
+                </Form.Group>
+                
+                <div className="d-grid">
+                  <Button variant="success" type="submit" size="lg">
+                    Şifreyi Güncelle
+                  </Button>
+                </div>
+              </Form>
+              
+              {passwordMessage && (
+                <Alert 
+                  variant={passwordMessage.includes("başarı") ? "success" : "danger"} 
+                  className="mt-4"
+                >
+                  {passwordMessage}
+                </Alert>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
 };
 
 export default PersonPage;
