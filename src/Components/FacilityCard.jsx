@@ -389,11 +389,21 @@ const handleSubmit = async () => {
                     color: facility.hasSecurityCameras ? "green" : "red",
                   }}
                 >
+                <span
+                  style={{
+                    color: facility.hasSecurityCameras ? "green" : "red",
+                  }}
+                >
                   {facility.hasSecurityCameras ? "Evet" : "Hayır"}
                 </span>
               </div>
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Ulaşım:</strong>
+                <span
+                  style={{
+                    color: facility.hasTransportService ? "green" : "red",
+                  }}
+                >
                 <span
                   style={{
                     color: facility.hasTransportService ? "green" : "red",

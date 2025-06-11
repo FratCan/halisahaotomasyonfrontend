@@ -8,6 +8,7 @@ import {
   uploadFacilityPhotos,
 } from "../api/FacilityApi";
 import FacilityCard from "../Components/FacilityCard";
+import FieldCard from "../Components/FieldCard";
 
 function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
@@ -20,6 +21,18 @@ function FacilitiesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [facilityNameToDelete, setFacilityNameToDelete] = useState("");
+  const [showFieldsModal, setShowFieldsModal] = useState(false);
+  const [fieldsFacility, setFieldsFacility] = useState(null); // { name, fields[] }
+  // FacilitiesPage fonksiyonunun başında, diğer useState’lerin yanında:
+const [showFieldEditor, setShowFieldEditor] = useState(false);
+const [editingField, setEditingField] = useState(null);
+
+
+  // Tıklandığında modalı aç
+  const handleViewFields = (facility) => {
+    setFieldsFacility(facility); // hem adı hem fields dizisi geliyor
+    setShowFieldsModal(true);
+  };
 
   // OwnerId'yi localStorage'dan al
   const ownerId = Number(localStorage.getItem("userId"));
@@ -34,6 +47,7 @@ function FacilitiesPage() {
     try {
       // Belirli bir id'ye ait tesisi çekmek için id parametresi gönderin
       const data = await getFacilities(ownerId);
+      console.log(data);
       setFacilities(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Facility çekilemedi:", err);
@@ -66,6 +80,10 @@ function FacilitiesPage() {
     setPhotoFile(null);
     setPhotoPreview("");
     setIsCreating(false);
+  };
+  const handleFieldEditClick = (field) => {
+    setEditingField(field);
+    setShowFieldEditor(true);
   };
 
   const handleFacilitySubmit = async (e) => {
@@ -209,16 +227,16 @@ function FacilitiesPage() {
     <>
       <h2 className="text-center my-4">Tesis Bilgisi</h2>
 
-      <Row
-        xs={1}
-        className="justify-content-center text-center  g-0 px-5" // px-3: soldan ve sağdan 1.5rem padding
-      >
+      <Row xs={1} className="justify-content-center text-center  g-0 px-5">
         {facilities.map((f) => (
-          <FacilityCard facility={f} onEdit={() => handleEditClick(f.id)} />
+          <FacilityCard
+            facility={f}
+            onEdit={() => handleEditClick(f.id)}
+            onViewFields={handleViewFields}
+          ></FacilityCard>
         ))}
       </Row>
 
-      {/* Silme ve Ekleme Butonları */}
       <div className="text-center mt-5 mb-4">
         <Button
           variant="danger"
@@ -488,6 +506,41 @@ function FacilitiesPage() {
               </Button>
             </Modal.Footer>
           </Form>
+        </Modal>
+      )}
+
+      {showFieldsModal && (
+        <Modal show onHide={() => setShowFieldsModal(false)} size="xl">
+          <Modal.Header closeButton>
+            <Modal.Title>{fieldsFacility?.name} - Saha Listesi</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            {fieldsFacility?.fields?.length ? (
+              <Row xs={1} sm={2} md={3} className="g-3">
+                {fieldsFacility.fields.map((field) => (
+                  <Col key={field.id}>
+                    <FieldCard
+                      field={field}
+                      onEdit={() => handleFieldEditClick(field)}
+                      showEditButton={true}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            ) : (
+              <p>Bu tesise ait saha tanımı bulunamadı.</p>
+            )}
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setShowFieldsModal(false)}
+            >
+              Kapat
+            </Button>
+          </Modal.Footer>
         </Modal>
       )}
     </>
