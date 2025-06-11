@@ -5,7 +5,7 @@ import {
   getAnnouncements,
   deleteAnnouncementById,
   updateAnnouncement,
-  uploadAnnouncementPhotos
+  uploadAnnouncementPhotos,
 } from "../api/Announcement";
 import {
   getEquipments,
@@ -14,7 +14,7 @@ import {
   updateEquipment,
 } from "../api/EquipmentsApi";
 
-const FacilityCard = ({ facility, onEdit, facilityId,onViewFields }) => {
+const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [error, setError] = useState("");
   const [openIndex, setOpenIndex] = useState(null);
@@ -98,52 +98,52 @@ const FacilityCard = ({ facility, onEdit, facilityId,onViewFields }) => {
     }
   };
 
-const handleSubmit = async () => {
-  if (!facility?.id) {
-    setError("Tesis ID'si bulunamadı!");
-    return;
-  }
-
-  if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
-    setError("Lütfen hem başlık hem de içerik girin.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("title", newAnnouncement.title);
-  formData.append("content", newAnnouncement.content);
-  formData.append("endTime", endDate || "");
-
-  try {
-    // 1. Ana duyuruyu kaydet
-    const response = await createAnnouncement(facility.id, formData);
-    const created = response.data || response;
-
-    // 2. Görsel varsa ayrı yükle
-    if (created?.id && image) {
-      await uploadAnnouncementPhotos(created.id, [image]);
+  const handleSubmit = async () => {
+    if (!facility?.id) {
+      setError("Tesis ID'si bulunamadı!");
+      return;
     }
 
-    // 3. Listeye ekle ve formu sıfırla
-    setAnnouncements((prev) => [created, ...prev]);
-    setShowAddAnnouncementModal(false);
-    setNewAnnouncement({
-      facilityId: facilityId,
-      title: "",
-      content: "",
-      quantity: "",
-      description: "",
-      isRentable: false,
-    });
-    setEndDate("");
-    setImage(null);
-    setImagePreview(null);
-    setError("");
-  } catch (err) {
-    console.error("Duyuru gönderilemedi:", err);
-    setError(`Duyuru gönderilemedi: ${err.message}`);
-  }
-};
+    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
+      setError("Lütfen hem başlık hem de içerik girin.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", newAnnouncement.title);
+    formData.append("content", newAnnouncement.content);
+    formData.append("endTime", endDate || "");
+
+    try {
+      // 1. Ana duyuruyu kaydet
+      const response = await createAnnouncement(facility.id, formData);
+      const created = response.data || response;
+
+      // 2. Görsel varsa ayrı yükle
+      if (created?.id && image) {
+        await uploadAnnouncementPhotos(created.id, [image]);
+      }
+
+      // 3. Listeye ekle ve formu sıfırla
+      setAnnouncements((prev) => [created, ...prev]);
+      setShowAddAnnouncementModal(false);
+      setNewAnnouncement({
+        facilityId: facilityId,
+        title: "",
+        content: "",
+        quantity: "",
+        description: "",
+        isRentable: false,
+      });
+      setEndDate("");
+      setImage(null);
+      setImagePreview(null);
+      setError("");
+    } catch (err) {
+      console.error("Duyuru gönderilemedi:", err);
+      setError(`Duyuru gönderilemedi: ${err.message}`);
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -389,11 +389,6 @@ const handleSubmit = async () => {
                     color: facility.hasSecurityCameras ? "green" : "red",
                   }}
                 >
-                <span
-                  style={{
-                    color: facility.hasSecurityCameras ? "green" : "red",
-                  }}
-                >
                   {facility.hasSecurityCameras ? "Evet" : "Hayır"}
                 </span>
               </div>
@@ -404,14 +399,10 @@ const handleSubmit = async () => {
                     color: facility.hasTransportService ? "green" : "red",
                   }}
                 >
-                <span
-                  style={{
-                    color: facility.hasTransportService ? "green" : "red",
-                  }}
-                >
                   {facility.hasTransportService ? "Evet" : "Hayır"}
                 </span>
               </div>
+
               <div style={{ display: "flex" }}>
                 <strong style={{ width: "140px" }}>Park:</strong>
                 <span style={{ color: facility.hasParking ? "green" : "red" }}>
@@ -428,13 +419,13 @@ const handleSubmit = async () => {
                 Düzenle
               </Button>
               <Button
-              variant="info"
-              size="sm"
-              className="mt-2"
-              onClick={() => onViewFields(facility)}
-            >
-              Sahaları Görüntüle
-            </Button>
+                variant="info"
+                size="sm"
+                className="mt-2"
+                onClick={() => onViewFields(facility)}
+              >
+                Sahaları Görüntüle
+              </Button>
               <Button
                 variant="success"
                 style={{ flex: 1 }}
