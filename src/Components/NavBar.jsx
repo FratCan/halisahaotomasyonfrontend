@@ -76,15 +76,15 @@ function NavBar() {
             >
               Ödemeler
             </Nav.Link>
-
-            <Nav.Link
+{/*  <Nav.Link
               as={Link}
               to="/announcement"
               className="mx-4"
               style={{ color: "#ffffff", transition: "color 0.1s ease" }}
             >
               Duyurular
-            </Nav.Link>
+            </Nav.Link>*/}
+          
 
             <Nav.Link
               as={Link}

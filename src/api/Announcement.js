@@ -40,19 +40,24 @@ export const deleteAnnouncementById = async (announcementId) => {
 };
 
 
-export const updateAnnouncement = async (announcementId, formData) => {
+export const updateAnnouncement = async (announcementId, body) => {
   try {
-    const response = await axios.put(`${API_URL}/${announcementId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const response = await axios.put(
+      `${API_URL}/${announcementId}`,
+      body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Duyuru güncellenemedi:", error);
     throw error;
   }
 };
+
 
 export const uploadAnnouncementPhotos = async (id, photoFiles) => {
       const formData = new FormData();

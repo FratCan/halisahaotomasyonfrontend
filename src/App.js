@@ -40,7 +40,7 @@ function Appcontent() {
               </ProtectedRoute>}
           />
           <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
-          <Route path="/announcement" element={<ProtectedRoute><AnnouncementPage/></ProtectedRoute>}/>
+          {/*<Route path="/announcement" element={<ProtectedRoute><AnnouncementPage/></ProtectedRoute>}/>*/}
       </Routes>
     </>
   );

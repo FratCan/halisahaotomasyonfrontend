@@ -9,6 +9,7 @@ import {
 } from "../api/FacilityApi";
 import FacilityCard from "../Components/FacilityCard";
 import FieldCard from "../Components/FieldCard";
+import LocationPicker from "../LocationPicker";
 
 function FacilitiesPage() {
   const [facilities, setFacilities] = useState([]);
@@ -24,10 +25,9 @@ function FacilitiesPage() {
   const [showFieldsModal, setShowFieldsModal] = useState(false);
   const [fieldsFacility, setFieldsFacility] = useState(null); // { name, fields[] }
   // FacilitiesPage fonksiyonunun başında, diğer useState’lerin yanında:
-const [showFieldEditor, setShowFieldEditor] = useState(false);
-const [editingField, setEditingField] = useState(null);
-
-
+  const [showFieldEditor, setShowFieldEditor] = useState(false);
+  const [editingField, setEditingField] = useState(null);
+const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null, city: "", town: "" });
   // Tıklandığında modalı aç
   const handleViewFields = (facility) => {
     setFieldsFacility(facility); // hem adı hem fields dizisi geliyor
@@ -88,6 +88,12 @@ const [editingField, setEditingField] = useState(null);
 
   const handleFacilitySubmit = async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    if (!form.checkValidity()) {
+      e.stopPropagation();
+      alert("Lütfen tüm zorunlu alanları doldurun.");
+      return;
+    }
     const elems = e.target.elements;
 
     const facilityData = {
@@ -98,6 +104,8 @@ const [editingField, setEditingField] = useState(null);
       addressDetails: elems.addressDetails.value,
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
+       latitude: selectedLocation.lat,
+    longitude: selectedLocation.lng,
       city: elems.city.value,
       town: elems.town.value,
       description: elems.description.value,
@@ -132,7 +140,9 @@ const [editingField, setEditingField] = useState(null);
       }
 
       // 3. Güncel listeyi çek
-      await fetchFacilities();
+      // 3. Güncel listeyi çek
+      setFacilities((prev) => [...prev, newFacility]); // hızlı görsel ekleme
+      await fetchFacilities(ownerId); // arka planda tam güncelleme
 
       // 4. Modalı kapat
       handleCloseModal();
@@ -227,7 +237,7 @@ const [editingField, setEditingField] = useState(null);
     <>
       <h2 className="text-center my-4">Tesis Bilgisi</h2>
 
-      <Row xs={1} className="justify-content-center text-center  g-0 px-5">
+      <Row xs={1} className="justify-content-center text-center  g-4 px-5 ">
         {facilities.map((f) => (
           <FacilityCard
             facility={f}
@@ -295,6 +305,14 @@ const [editingField, setEditingField] = useState(null);
                       }}
                     />
                   </Form.Group>
+                  <Form.Group className="mb-4">
+  <Form.Label>Konum Seç (Harita Üzerinden)</Form.Label>
+  <LocationPicker
+    onLocationChange={(loc) => setSelectedLocation(loc)}
+    city={selectedLocation.city}
+    town={selectedLocation.town}
+  />
+</Form.Group>
                 </Col>
                 <Col>
                   <Form.Group controlId="name" className="mb-3">
@@ -313,6 +331,7 @@ const [editingField, setEditingField] = useState(null);
                       name="email"
                       type="email"
                       defaultValue={selectedFacility?.email || ""}
+                      required
                     />
                   </Form.Group>
 
@@ -322,6 +341,7 @@ const [editingField, setEditingField] = useState(null);
                       name="location"
                       type="text"
                       defaultValue={selectedFacility?.location || ""}
+                      required
                     />
                   </Form.Group>
 
@@ -341,16 +361,30 @@ const [editingField, setEditingField] = useState(null);
                       name="phone"
                       type="text"
                       defaultValue={selectedFacility?.phone || ""}
+                      required
+                      pattern="^0(5\d{9}|[2-4]\d{2}\s?\d{3}\s?\d{4})$"
+                      title="Lütfen geçerli bir telefon numarası girin. Örn: 05xxxxxxxxx veya 0212 123 4567"
                     />
+                    <Form.Control.Feedback type="invalid">
+                      Lütfen geçerli bir cep veya sabit telefon numarası girin.
+                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group controlId="bankAccountInfo" className="mb-3">
-                    <Form.Label>Banka Hesap Bilgisi</Form.Label>
+                    <Form.Label>IBAN</Form.Label>
                     <Form.Control
                       name="bankAccountInfo"
                       type="text"
                       defaultValue={selectedFacility?.bankAccountInfo || ""}
+                      required
+                      pattern="^TR\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{0,2}$"
+                      title="Lütfen geçerli bir IBAN girin. Örn: TR12 3456 7890 1234 5678 9012 34"
+                      style={{ textTransform: "uppercase" }}
                     />
+                    <Form.Control.Feedback type="invalid">
+                      Lütfen geçerli bir IBAN girin (örnek: TR12 3456 7890 1234
+                      5678 9012 34)
+                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group controlId="city" className="mb-3">
@@ -359,6 +393,7 @@ const [editingField, setEditingField] = useState(null);
                       name="city"
                       type="text"
                       defaultValue={selectedFacility?.city || ""}
+                      required
                     />
                   </Form.Group>
 
@@ -368,6 +403,7 @@ const [editingField, setEditingField] = useState(null);
                       name="town"
                       type="text"
                       defaultValue={selectedFacility?.town || ""}
+                      required
                     />
                   </Form.Group>
 

@@ -174,8 +174,8 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
   const editAnnouncement = (idx) => {
     const ann = announcements[idx];
     setEditingIndex(idx);
-    setEditedTitle(ann.title);
-    setEditedText(ann.content);
+    setEditedTitle(ann.title || "");
+    setEditedText(ann.content || "");
     setEditedEndDate(ann.endTime ?? "");
     setImagePreview(ann.bannerUrl ?? "");
   };
@@ -187,20 +187,23 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", editedTitle);
-    formData.append("content", editedText);
-    formData.append("endTime", editedEndDate || "");
-    if (image) {
-      formData.append("bannerUrl", image);
-    }
+    const jsonBody = {
+      title: editedTitle,
+      content: editedText,
+      endTime: editedEndDate || null,
+    };
 
     try {
-      const updated = await updateAnnouncement(editedAnnouncement.id, formData);
+      const updated = await updateAnnouncement(editedAnnouncement.id, jsonBody);
+
+      // Görsel varsa ayrıca yükle
+      if (image) {
+        await uploadAnnouncementPhotos(editedAnnouncement.id, [image]);
+      }
 
       // local state'i güncelle
       const newAnnouncements = announcements.map((ann, i) =>
-        i === editingIndex ? updated : ann
+        i === editingIndex ? { ...updated, bannerUrl: imagePreview } : ann
       );
       setAnnouncements(newAnnouncements);
 
@@ -410,32 +413,24 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                 </span>
               </div>
             </Card.Text>
-            <div className="d-flex gap-2">
-              <Button
-                variant="primary"
-                style={{ flex: 1 }}
-                onClick={() => onEdit(facility)}
-              >
+            <div
+              className="d-grid gap-2 mt-4"
+              style={{ gridTemplateColumns: "repeat(2, 1fr)", display: "grid" }}
+            >
+              <Button variant="primary" onClick={() => onEdit(facility)}>
                 Düzenle
               </Button>
-              <Button
-                variant="info"
-                size="sm"
-                className="mt-2"
-                onClick={() => onViewFields(facility)}
-              >
+
+              <Button variant="info" onClick={() => onViewFields(facility)}>
                 Sahaları Görüntüle
               </Button>
-              <Button
-                variant="success"
-                style={{ flex: 1 }}
-                onClick={handleCreateClick}
-              >
-                Duyuru ekle
+
+              <Button variant="success" onClick={handleCreateClick}>
+                Duyuru Ekle
               </Button>
+
               <Button
-                variant="info"
-                style={{ flex: 1 }}
+                variant="warning"
                 onClick={() => {
                   fetchAnnouncements();
                   setShowAllAnnouncementsModal(true);
@@ -527,33 +522,41 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     <div>
                       <Card.Title>{ann.title ?? "Başlık yok"}</Card.Title>
                       <Card.Text>{ann.content ?? "İçerik yok"}</Card.Text>
+
+                      {ann.bannerUrl && (
+                        <div style={{ marginBottom: 10 }}>
+                          <img
+                            src={`https://halisaha.up.railway.app/${ann.bannerUrl}`}
+                            alt="Duyuru"
+                            style={{
+                              maxWidth: "200px",
+                              maxHeight: "150px",
+                              borderRadius: "8px",
+                            }}
+                          />
+                        </div>
+                      )}
+
                       {ann.endTime && (
                         <small className="text-muted">
                           Bitiş: {new Date(ann.endTime).toLocaleDateString()}
                         </small>
                       )}
                     </div>
+
                     <div className="d-flex gap-2">
                       <Button
                         variant="warning"
                         size="sm"
                         onClick={() => {
-                          setEditingIndex(idx);
-                          setNewAnnouncement({
-                            title: ann.title ?? "",
-                            content: ann.content ?? "",
-                            quantity: "", // kullanılmıyor ama boş geç
-                            description: "", // aynı şekilde
-                            isRentable: false,
-                          });
-                          setEditedEndDate(ann.endTime ?? "");
-                          setImagePreview(ann.bannerUrl ?? "");
+                          editAnnouncement(idx); // sadece bu satır yeterli
                           setShowAddAnnouncementModal(true);
                           setShowAllAnnouncementsModal(false);
                         }}
                       >
                         Düzenle
                       </Button>
+
                       <Button
                         variant="danger"
                         size="sm"
@@ -583,12 +586,16 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                 <Form.Label>Duyuru Başlığı</Form.Label>
                 <Form.Control
                   type="text"
-                  value={newAnnouncement.title}
+                  value={
+                    editingIndex !== null ? editedTitle : newAnnouncement.title
+                  }
                   onChange={(e) =>
-                    setNewAnnouncement({
-                      ...newAnnouncement,
-                      title: e.target.value,
-                    })
+                    editingIndex !== null
+                      ? setEditedTitle(e.target.value)
+                      : setNewAnnouncement({
+                          ...newAnnouncement,
+                          title: e.target.value,
+                        })
                   }
                 />
               </Form.Group>
@@ -597,12 +604,16 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                 <Form.Control
                   as="textarea"
                   rows={3}
-                  value={newAnnouncement.content}
+                  value={
+                    editingIndex !== null ? editedText : newAnnouncement.content
+                  }
                   onChange={(e) =>
-                    setNewAnnouncement({
-                      ...newAnnouncement,
-                      content: e.target.value,
-                    })
+                    editingIndex !== null
+                      ? setEditedText(e.target.value)
+                      : setNewAnnouncement({
+                          ...newAnnouncement,
+                          content: e.target.value,
+                        })
                   }
                 />
               </Form.Group>
