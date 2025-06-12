@@ -365,53 +365,110 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                 <strong style={{ width: "140px" }}>Açıklama:</strong>{" "}
                 {facility.description}
               </div>
-              <div style={{ display: "flex", marginBottom: "8px" }}>
-                <strong style={{ width: "140px" }}>Kafe:</strong>
-                <span
-                  style={{ color: facility.hasCafeteria ? "green" : "red" }}
-                >
-                  {facility.hasCafeteria ? "Evet" : "Hayır"}
-                </span>
-              </div>
-              <div style={{ display: "flex", marginBottom: "8px" }}>
-                <strong style={{ width: "140px" }}>Duş:</strong>
-                <span style={{ color: facility.hasShower ? "green" : "red" }}>
-                  {facility.hasShower ? "Evet" : "Hayır"}
-                </span>
-              </div>
-              <div style={{ display: "flex" }}>
-                <strong style={{ width: "140px" }}>Tuvalet:</strong>
-                <span style={{ color: facility.hasToilet ? "green" : "red" }}>
-                  {facility.hasToilet ? "Evet" : "Hayır"}
-                </span>
-              </div>
-              <div style={{ display: "flex" }}>
-                <strong style={{ width: "140px" }}>Kamera:</strong>
-                <span
-                  style={{
-                    color: facility.hasSecurityCameras ? "green" : "red",
-                  }}
-                >
-                  {facility.hasSecurityCameras ? "Evet" : "Hayır"}
-                </span>
-              </div>
-              <div style={{ display: "flex" }}>
-                <strong style={{ width: "140px" }}>Ulaşım:</strong>
-                <span
-                  style={{
-                    color: facility.hasTransportService ? "green" : "red",
-                  }}
-                >
-                  {facility.hasTransportService ? "Evet" : "Hayır"}
-                </span>
-              </div>
 
-              <div style={{ display: "flex" }}>
-                <strong style={{ width: "140px" }}>Park:</strong>
-                <span style={{ color: facility.hasParking ? "green" : "red" }}>
-                  {facility.hasParking ? "Evet" : "Hayır"}
-                </span>
-              </div>
+              <Row>
+                <Col>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Kafe:</strong>
+                    <span
+                      style={{ color: facility.hasCafeteria ? "green" : "red" }}
+                    >
+                      {facility.hasCafeteria ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Duş:</strong>
+                    <span
+                      style={{ color: facility.hasShower ? "green" : "red" }}
+                    >
+                      {facility.hasShower ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                    <strong style={{ width: "140px" }}>Tuvalet:</strong>
+                    <span
+                      style={{ color: facility.hasToilet ? "green" : "red" }}
+                    >
+                      {facility.hasToilet ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                    <strong style={{ width: "140px" }}>Ulaşım:</strong>
+                    <span
+                      style={{
+                        color: facility.hasTransportService ? "green" : "red",
+                      }}
+                    >
+                      {facility.hasTransportService ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                    <strong style={{ width: "140px" }}>Park:</strong>
+                    <span
+                      style={{ color: facility.hasParking ? "green" : "red" }}
+                    >
+                      {facility.hasParking ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+                </Col>
+                <Col>
+                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                    <strong style={{ width: "140px" }}>İlk Yardım Kiti:</strong>
+                    <span
+                      style={{ color: facility.hasFirstAid ? "green" : "red" }}
+                    >
+                      {facility.hasFirstAid ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                    <strong style={{ width: "140px" }}>
+                      Kamera:
+                    </strong>
+                    <span
+                      style={{
+                        color: facility.hasSecurityCameras ? "green" : "red",
+                      }}
+                    >
+                      {facility.hasSecurityCameras ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Dolap:</strong>
+                    <span
+                      style={{
+                        color: facility.hasLockableCabinet ? "green" : "red",
+                      }}
+                    >
+                      {facility.hasLockableCabinet ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Soyunma Odası:</strong>
+                    <span
+                      style={{
+                        color: facility.hasLockerRoom ? "green" : "red",
+                      }}
+                    >
+                      {facility.hasLockerRoom ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Hakem Hizmeti:</strong>
+                    <span
+                      style={{
+                        color: facility.hasRefereeService ? "green" : "red",
+                      }}
+                    >
+                      {facility.hasRefereeService ? "Evet" : "Hayır"}
+                    </span>
+                  </div>
+                </Col>
+              </Row>
             </Card.Text>
             <div
               className="d-grid gap-2 mt-4"

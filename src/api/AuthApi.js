@@ -47,7 +47,6 @@ const loginApp = async (email, password) => {
   }
 };
 
-
 const registerApp = async (firstName, lastName, userName, email, role, city, town, birthday, password) => {
       try {
         role = "Owner";
@@ -99,6 +98,41 @@ export const update_password = (data) => {
         }
       );
 };
+export const updateOwner = async (payload) => {
+  const token = localStorage.getItem("token");       // <-- JWT burada
+  if (!token) throw new Error("Oturum bulunamadı");
 
-
+  try {
+    const { data } = await axios.put(
+      "https://halisaha.up.railway.app/api/Auth/owner",
+      payload,                                        // dışarıdan gelen veriyi kullan
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return data;                                     // caller setUserData(data) diyebilsin
+  } catch (err) {
+    const msg =
+      typeof err.response?.data === "object"
+        ? err.response.data.Message || "Güncelleme hatası"
+        : err.response?.data || err.message;
+    throw new Error(msg);
+  }
+};
+export const getUserInfo = async (id) => {
+  const token = localStorage.getItem("token");   // gerekiyorsa
+  const { data } = await axios.get(
+    `https://halisaha.up.railway.app/user/info/${id}`,
+    {
+      headers: {
+        Accept: "*/*",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    }
+  );
+  return data;   // { firstName, lastName, userName, ... }
+};
 export {loginApp, registerApp}

@@ -7,6 +7,7 @@ import {
   Row,
   Col,
   Card,
+  InputGroup,
 } from "react-bootstrap";
 import FieldCard from "../Components/FieldCard";
 import {
@@ -45,16 +46,12 @@ function FieldsPage({ facilityId, setFacilityId }) {
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [fieldNameToDelete, setFieldNameToDelete] = useState("");
   const [facilities, setFacilities] = useState([]);
-
-  const [weeklyOpenings, setWeeklyOpenings] = useState(
-    WEEK_DAYS.map((_, i) => ({
-      dayOfWeek: i,
-      startTime: "08:00:00",
-      endTime: "23:00:00",
-    }))
-  );
-
   const [exceptions, setExceptions] = useState([]);
+  const [weeklyOpenings, setWeeklyOpenings] = useState([]);
+  const dedupeWeekly = (arr) =>
+    arr.filter(
+      (v, i, a) => a.findIndex((t) => t.dayOfWeek === v.dayOfWeek) === i
+    );
 
   // OwnerId'yi localStorage'dan al
   const ownerId = Number(localStorage.getItem("userId"));
@@ -99,56 +96,77 @@ function FieldsPage({ facilityId, setFacilityId }) {
       console.error("Fields çekilemedi:", err);
     }
   };
+  useEffect(() => {
+    console.log("WeeklyOpenings mount:", weeklyOpenings);
+  }, [weeklyOpenings]);
+
   // Düzenle butonuna tıklayınca
-  const handleEditClick = (id) => {
-    const fresh = fields.find((f) => f.id === id);
-    setSelectedField(fresh);
-    setPhotoPreview(
-      fresh.photoUrls?.[0]
-        ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
-        : ""
-    );
+const handleEditClick = (id) => {
+  const fresh = fields.find((f) => f.id === id);
+  setSelectedField(fresh);
+
+  setPhotoPreview(
+    fresh.photoUrls?.[0]
+      ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
+      : ""
+  );
+
+  /*──── weeklyOpenings: string → index dönüşümü ────*/
   setWeeklyOpenings(
-  Array.isArray(fresh.weeklyOpenings)
-    ? fresh.weeklyOpenings.map((w) => ({
-        dayOfWeek: w.dayOfWeek,
-        startTime: w.startTime,
-        endTime: w.endTime,
-      }))
-    : WEEK_DAYS.map((_, i) => ({
-        dayOfWeek: i,
-        startTime: "08:00:00",
-        endTime: "23:00:00",
-      }))
-);
-
-
-    setExceptions(
-      Array.isArray(fresh.exceptions)
-        ? fresh.exceptions.map((ex) => ({
-            date: ex.date?.slice(0, 10),
-            isOpen: ex.isOpen,
+    dedupeWeekly(
+      Array.isArray(fresh.weeklyOpenings)
+        ? fresh.weeklyOpenings
+            .map((w) => {
+              const idx =
+                typeof w.dayOfWeek === "number"
+                  ? w.dayOfWeek                                    // zaten 0-6
+                  : WEEK_DAYS.findIndex(
+                      (d) =>
+                        d.toLowerCase() ===
+                        String(w.dayOfWeek).toLowerCase()          // "Monday" → 1
+                    );
+              return idx === -1
+                ? null                                             // eşleşmezse at
+                : { ...w, dayOfWeek: idx };
+            })
+            .filter(Boolean)                                       // null’ları sil
+        : WEEK_DAYS.map((_, i) => ({
+            dayOfWeek: i,
+            startTime: "08:00:00",
+            endTime: "23:00:00",
           }))
-        : []
-    );
+    )
+  );
 
-    const newDaysAvailable = WEEK_DAYS.reduce(
-      (acc, day) => ({
-        ...acc,
-        [day]:
-          Array.isArray(fresh.openingDays) && fresh.openingDays.includes(day),
-      }),
-      {}
-    );
+  /*──── exceptions & diğer state’ler ────*/
+  setExceptions(
+    Array.isArray(fresh.exceptions)
+      ? fresh.exceptions.map((ex) => ({
+          date: ex.date?.slice(0, 10),
+          isOpen: ex.isOpen,
+        }))
+      : []
+  );
 
-    setDaysAvailable(newDaysAvailable);
-    setFormAvailable(fresh.isAvailable);
-    setIsCreateMode(false);
-    setShowModal(true);
-  };
+  const newDaysAvailable = WEEK_DAYS.reduce(
+    (acc, day) => ({
+      ...acc,
+      [day]:
+        Array.isArray(fresh.openingDays) && fresh.openingDays.includes(day),
+    }),
+    {}
+  );
+
+  setDaysAvailable(newDaysAvailable);
+  setFormAvailable(fresh.isAvailable);
+  setIsCreateMode(false);
+  setShowModal(true);
+};
 
   // "+" kartına tıklayınca
   const handleCreateClick = () => {
+    console.log("handleCreateClick: weeklyOpenings öncesi:", weeklyOpenings);
+
     setSelectedField({
       facilityId: facilityId, // facilityId burada kullanılıyor
       name: "",
@@ -161,13 +179,22 @@ function FieldsPage({ facilityId, setFacilityId }) {
       hasCamera: false,
       lightingAvailable: false,
       isAvailable: false,
-      openingDays: [],
       photos: "",
     });
     // Gün seçimini sıfırla
     setDaysAvailable(
       WEEK_DAYS.reduce((acc, d) => ({ ...acc, [d]: false }), {})
     );
+    setWeeklyOpenings(
+      dedupeWeekly(
+        WEEK_DAYS.map((_, i) => ({
+          dayOfWeek: i,
+          startTime: "08:00:00",
+          endTime: "23:00:00",
+        }))
+      )
+    );
+    console.log("handleCreateClick: weeklyOpenings sonrası:", weeklyOpenings);
     setFormAvailable(false);
     setPhotoPreview("");
     setPhotoFile(null);
@@ -181,6 +208,8 @@ function FieldsPage({ facilityId, setFacilityId }) {
     setPhotoFile(null);
     setPhotoPreview("");
     setIsCreateMode(false);
+    setWeeklyOpenings([]); // <-- EKLE!
+    setExceptions([]);
   };
   const handleOpenDeleteModal = () => {
     setFieldNameToDelete("");
@@ -213,6 +242,7 @@ function FieldsPage({ facilityId, setFacilityId }) {
       );
     }
   };
+
   // Saat seçenekleri
   const hourOptions = Array.from(
     { length: 17 },
@@ -239,9 +269,10 @@ function FieldsPage({ facilityId, setFacilityId }) {
       hasCamera: form.camera.checked,
       lightingAvailable: form.lighted.checked,
       isAvailable: formAvailable,
-      openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
       floorType: form.floorType.checked ? 1 : 0,
-      weeklyOpenings: weeklyOpenings,
+      hasTribune: form.tribune.checked,
+      hasScoreBoard: form.scoreBoard.checked,
+      weeklyOpenings: dedupeWeekly(weeklyOpenings),
       exceptions: exceptions.map((ex) => ({
         date: new Date(ex.date).toISOString(),
         isOpen: ex.isOpen ?? false,
@@ -292,7 +323,9 @@ function FieldsPage({ facilityId, setFacilityId }) {
       openingDays: WEEK_DAYS.filter((day) => daysAvailable[day]),
       photoUrls: selectedField.photoUrls || [],
       floorType: form.floorType.checked ? 1 : 0,
-      weeklyOpenings: weeklyOpenings,
+      hasTribune: form.tribune.checked,
+      hasScoreBoard: form.scoreBoard.checked,
+      weeklyOpenings: dedupeWeekly(weeklyOpenings),
       exceptions: exceptions.map((ex) => ({
         date: new Date(ex.date).toISOString(),
         isOpen: ex.isOpen ?? false,
@@ -409,7 +442,7 @@ function FieldsPage({ facilityId, setFacilityId }) {
 
       {/* Ekleme / Düzenleme Modalı */}
       {showModal && (
-        <Modal show onHide={handleCloseModal}>
+        <Modal show onHide={handleCloseModal} dialogClassName="modal-xl">
           <Modal.Header closeButton>
             <Modal.Title>
               {isCreateMode
@@ -420,271 +453,309 @@ function FieldsPage({ facilityId, setFacilityId }) {
 
           <Form onSubmit={isCreateMode ? handleFieldCreate : handleFieldUpdate}>
             <Modal.Body>
-              {/* Fotoğraf */}
-              <Form.Group controlId="photos" className="mb-3">
-                <Form.Label>Fotoğraf</Form.Label>
-                {photoPreview && (
-                  <img
-                    src={photoPreview}
-                    alt="Saha"
-                    style={{
-                      width: "100%",
-                      maxHeight: "300px",
-                      objectFit: "cover",
-                    }}
-                    className="mb-3"
-                  />
-                )}
-                <Form.Control
-                  name="photoFile"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setPhotoFile(file);
-                      setPhotoPreview(URL.createObjectURL(file));
-                    }
-                  }}
-                />
-              </Form.Group>
-
-              {/* Adı */}
-              <Form.Group controlId="name" className="mt-2">
-                <Form.Label>Adı</Form.Label>
-                <Form.Control
-                  name="name"
-                  type="text"
-                  defaultValue={selectedField.name}
-                />
-              </Form.Group>
-
-              {/* Kapasite */}
-              <Form.Group controlId="capacity" className="mt-2">
-                <Form.Label>Kapasite</Form.Label>
-                <Form.Control
-                  name="capacity"
-                  type="number"
-                  defaultValue={selectedField.capacity}
-                />
-              </Form.Group>
-
-              {/* Boyut */}
-              <Row className="mt-2">
+              <Row>
                 <Col>
-                  <Form.Group controlId="width">
-                    <Form.Label>En (m)</Form.Label>
+                  {" "}
+                  {/* Fotoğraf */}
+                  <Form.Group controlId="photos" className="mb-3">
+                    <Form.Label>Fotoğraf</Form.Label>
+                    {photoPreview && (
+                      <img
+                        src={photoPreview}
+                        alt="Saha"
+                        style={{
+                          width: "100%",
+                          maxHeight: "300px",
+                          objectFit: "cover",
+                        }}
+                        className="mb-3"
+                      />
+                    )}
                     <Form.Control
-                      name="width"
-                      type="number"
-                      defaultValue={selectedField.width}
+                      name="photoFile"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setPhotoFile(file);
+                          setPhotoPreview(URL.createObjectURL(file));
+                        }
+                      }}
                     />
+                  </Form.Group>
+                  {/* Adı */}
+                  <Form.Group controlId="name" className="mt-2">
+                    <Form.Label>Adı</Form.Label>
+                    <Form.Control
+                      name="name"
+                      type="text"
+                      defaultValue={selectedField.name}
+                    />
+                  </Form.Group>
+                  {/* Kapasite */}
+                  <Form.Group controlId="capacity" className="mt-2">
+                    <Form.Label>Kapasite</Form.Label>
+                    <Form.Control
+                      name="capacity"
+                      type="number"
+                      defaultValue={selectedField.capacity}
+                    />
+                  </Form.Group>
+                  {/* Boyut */}
+                  <Row className="mt-2">
+                    <Col>
+                      <Form.Group controlId="width">
+                        <Form.Label>En (m)</Form.Label>
+                        <Form.Control
+                          name="width"
+                          type="number"
+                          defaultValue={selectedField.width}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col>
+                      <Form.Group controlId="height">
+                        <Form.Label>Boy (m)</Form.Label>
+                        <Form.Control
+                          name="height"
+                          type="number"
+                          defaultValue={selectedField.height}
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  {/* Fiyat */}
+                  <Form.Group controlId="price" className="mt-2">
+                    <Form.Label>Fiyat</Form.Label>
+                    <InputGroup>
+                      <Form.Control
+                        name="price"
+                        type="number"
+                        defaultValue={selectedField.pricePerHour}
+                      />
+                      <InputGroup.Text>TL</InputGroup.Text>
+                    </InputGroup>
                   </Form.Group>
                 </Col>
                 <Col>
-                  <Form.Group controlId="height">
-                    <Form.Label>Boy (m)</Form.Label>
-                    <Form.Control
-                      name="height"
-                      type="number"
-                      defaultValue={selectedField.height}
-                    />
+                  {" "}
+                  <h5 className="mt-3">🗓️ Haftalık Açılış Saatleri</h5>
+                  {weeklyOpenings.map((item, index) => (
+                    <Row key={index} className="mb-2 align-items-center">
+                      <Col md={3}>
+                        <Form.Label className="fw-semibold">
+                          {WEEK_DAYS[item.dayOfWeek]}
+                        </Form.Label>
+                      </Col>
+
+                      <Col md={3}>
+                        <Form.Control
+                          type="time"
+                          value={item.startTime?.slice(0, 5) || ""}
+                          onChange={(e) => {
+                            const updated = [...weeklyOpenings];
+                            updated[index].startTime = e.target.value + ":00";
+                            setWeeklyOpenings(updated);
+                          }}
+                        />
+                      </Col>
+
+                      <Col md={3}>
+                        <Form.Control
+                          type="time"
+                          value={item.endTime?.slice(0, 5) || ""}
+                          onChange={(e) => {
+                            const updated = [...weeklyOpenings];
+                            updated[index].endTime = e.target.value + ":00";
+                            setWeeklyOpenings(updated);
+                          }}
+                        />
+                      </Col>
+
+                      <Col md={3}>
+                        <Button
+                          variant="danger"
+                          onClick={() => {
+                            const updated = weeklyOpenings.filter(
+                              (w) => w.dayOfWeek !== item.dayOfWeek // 🔥 sadece bu günü sil
+                            );
+                            setWeeklyOpenings(updated);
+                          }}
+                        >
+                          Sil
+                        </Button>
+                      </Col>
+                    </Row>
+                  ))}
+                  <Button
+                    variant="secondary"
+                    className="mt-2"
+                    onClick={() => {
+                      const used = weeklyOpenings.map((w) => w.dayOfWeek);
+                      const next = WEEK_DAYS.findIndex(
+                        (_, i) => !used.includes(i)
+                      );
+                      if (next !== -1) {
+                        setWeeklyOpenings(
+                          dedupeWeekly([
+                            ...weeklyOpenings,
+                            {
+                              dayOfWeek: next,
+                              startTime: "08:00:00",
+                              endTime: "23:00:00",
+                            },
+                          ])
+                        );
+                      }
+                    }}
+                    disabled={weeklyOpenings.length >= 7}
+                  >
+                    + Gün Ekle
+                  </Button>
+                  <h5 className="mt-4">📌 Kapalı Günler</h5>
+                  {exceptions.map((ex, i) => (
+                    <Row key={i} className="mb-2">
+                      <Col md={8}>
+                        <Form.Control
+                          type="date"
+                          value={ex.date}
+                          onChange={(e) => {
+                            const updated = [...exceptions];
+                            updated[i].date = e.target.value;
+                            setExceptions(updated);
+                          }}
+                        />
+                      </Col>
+                      <Col md={4}>
+                        <Button
+                          variant="danger"
+                          onClick={() => {
+                            const filtered = exceptions.filter(
+                              (_, j) => j !== i
+                            );
+                            setExceptions(filtered);
+                          }}
+                        >
+                          Kaldır
+                        </Button>
+                      </Col>
+                    </Row>
+                  ))}
+                  <Button
+                    variant="secondary"
+                    className="mt-2"
+                    onClick={() =>
+                      setExceptions([
+                        ...exceptions,
+                        { date: "", isOpen: false },
+                      ])
+                    }
+                  >
+                    + Kapalı Gün Ekle
+                  </Button>
+                  {/* Checkbox’lar */}
+                  <Form.Group as={Row} controlId="indoor" className="mt-3">
+                    <Form.Label column sm={3}>
+                      Kapalı Alan
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="indoor"
+                        type="checkbox"
+                        defaultChecked={selectedField.isIndoor}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} controlId="camera" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Kamera
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="camera"
+                        type="checkbox"
+                        defaultChecked={selectedField.hasCamera}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} controlId="floorType" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Çim Tipi
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="floorType"
+                        type="checkbox"
+                        defaultChecked={selectedField.floorType}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} controlId="lighted" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Aydınlatmalı
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="lighted"
+                        type="checkbox"
+                        defaultChecked={selectedField.lightingAvailable}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} controlId="scoreBoard" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Skor Tabelası
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="scoreBoard"
+                        type="checkbox"
+                        defaultChecked={selectedField.hasScoreBoard}
+                      />
+                    </Col>
+                  </Form.Group>
+                  <Form.Group as={Row} controlId="tribune" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Türübün
+                    </Form.Label>
+                    <Col sm={9}>
+                      <Form.Check
+                        name="tribune"
+                        type="checkbox"
+                        defaultChecked={selectedField.hasTribune}
+                      />
+                    </Col>
+                  </Form.Group>
+                  {/* Mevcut ve Günler */}
+                  <Form.Group as={Row} controlId="available" className="mt-2">
+                    <Form.Label column sm={3}>
+                      Mevcut
+                    </Form.Label>
+
+                    <Col sm={9}>
+                      <Form.Check
+                        name="available"
+                        type="checkbox"
+                        checked={formAvailable}
+                        onChange={(e) => {
+                          const isOn = e.target.checked;
+                          setFormAvailable(isOn);
+                          if (isOn) {
+                            // Mevcut açılınca tüm günleri true yap
+                            setDaysAvailable(
+                              WEEK_DAYS.reduce(
+                                (acc, d) => ({ ...acc, [d]: true }),
+                                {}
+                              )
+                            );
+                          }
+                        }}
+                      />
+                    </Col>
                   </Form.Group>
                 </Col>
               </Row>
-              {/* Fiyat */}
-              <Form.Group controlId="price" className="mt-2">
-                <Form.Label>Fiyat</Form.Label>
-                <Form.Control
-                  name="price"
-                  type="number"
-                  defaultValue={selectedField.pricePerHour}
-                />
-              </Form.Group>
-
-<h5 className="mt-3">🗓️ Haftalık Açılış Saatleri</h5>
-
-{weeklyOpenings.map((item, index) => (
-  <Row key={index} className="mb-2 align-items-center">
-    <Col md={3}>
-      <Form.Label className="fw-semibold">
-        {WEEK_DAYS[item.dayOfWeek]}
-      </Form.Label>
-    </Col>
-
-    <Col md={3}>
-      <Form.Control
-        type="time"
-        value={item.startTime?.slice(0, 5) || ""}
-        onChange={(e) => {
-          const updated = [...weeklyOpenings];
-          updated[index].startTime = e.target.value + ":00";
-          setWeeklyOpenings(updated);
-        }}
-      />
-    </Col>
-
-    <Col md={3}>
-      <Form.Control
-        type="time"
-        value={item.endTime?.slice(0, 5) || ""}
-        onChange={(e) => {
-          const updated = [...weeklyOpenings];
-          updated[index].endTime = e.target.value + ":00";
-          setWeeklyOpenings(updated);
-        }}
-      />
-    </Col>
-
-    <Col md={3}>
-      <Button
-        variant="danger"
-        onClick={() => {
-          const updated = weeklyOpenings.filter((_, i) => i !== index);
-          setWeeklyOpenings(updated);
-        }}
-        disabled={weeklyOpenings.length <= 1}
-      >
-        Sil
-      </Button>
-    </Col>
-  </Row>
-))}
-
-<Button
-  variant="secondary"
-  className="mt-2"
-  onClick={() => {
-    const usedDays = weeklyOpenings.map((x) => x.dayOfWeek);
-    const nextDay = WEEK_DAYS.findIndex((_, i) => !usedDays.includes(i));
-    if (nextDay !== -1) {
-      setWeeklyOpenings([
-        ...weeklyOpenings,
-        {
-          dayOfWeek: nextDay,
-          startTime: "08:00:00",
-          endTime: "23:00:00",
-        },
-      ]);
-    }
-  }}
-  disabled={weeklyOpenings.length >= 7}
->
-  + Gün Ekle
-</Button>
-
-
-              <h5 className="mt-4">📌 Kapalı Günler</h5>
-              {exceptions.map((ex, i) => (
-                <Row key={i} className="mb-2">
-                  <Col md={8}>
-                    <Form.Control
-                      type="date"
-                      value={ex.date}
-                      onChange={(e) => {
-                        const updated = [...exceptions];
-                        updated[i].date = e.target.value;
-                        setExceptions(updated);
-                      }}
-                    />
-                  </Col>
-                  <Col md={4}>
-                    <Button
-                      variant="danger"
-                      onClick={() => {
-                        const filtered = exceptions.filter((_, j) => j !== i);
-                        setExceptions(filtered);
-                      }}
-                    >
-                      Kaldır
-                    </Button>
-                  </Col>
-                </Row>
-              ))}
-              <Button
-                variant="secondary"
-                className="mt-2"
-                onClick={() =>
-                  setExceptions([...exceptions, { date: "", isOpen: false }])
-                }
-              >
-                + Kapalı Gün Ekle
-              </Button>
-
-              {/* Checkbox’lar */}
-              <Form.Group as={Row} controlId="indoor" className="mt-3">
-                <Form.Label column sm={3}>
-                  Kapalı Alan
-                </Form.Label>
-                <Col sm={9}>
-                  <Form.Check
-                    name="indoor"
-                    type="checkbox"
-                    defaultChecked={selectedField.isIndoor}
-                  />
-                </Col>
-              </Form.Group>
-              <Form.Group as={Row} controlId="camera" className="mt-2">
-                <Form.Label column sm={3}>
-                  Kamera
-                </Form.Label>
-                <Col sm={9}>
-                  <Form.Check
-                    name="camera"
-                    type="checkbox"
-                    defaultChecked={selectedField.hasCamera}
-                  />
-                </Col>
-              </Form.Group>
-              <Form.Group as={Row} controlId="floorType" className="mt-2">
-                <Form.Label column sm={3}>
-                  Çim Tipi
-                </Form.Label>
-                <Col sm={9}>
-                  <Form.Check
-                    name="floorType"
-                    type="checkbox"
-                    defaultChecked={selectedField.floorType}
-                  />
-                </Col>
-              </Form.Group>
-              <Form.Group controlId="lighted" className="mt-2">
-                <Form.Check
-                  name="lighted"
-                  type="checkbox"
-                  label="Aydınlatmalı"
-                  defaultChecked={selectedField.lightingAvailable}
-                />
-              </Form.Group>
-
-              {/* Mevcut ve Günler */}
-              <Form.Group controlId="available" className="mt-2">
-                <Form.Check
-                  type="checkbox"
-                  label="Mevcut"
-                  checked={formAvailable}
-                  onChange={handleAvailabilityChange}
-                />
-              </Form.Group>
-
-              {formAvailable && (
-                <div className="mt-3">
-                  <Form.Label>Çalışma Günleri</Form.Label>
-                  <div>
-                    {WEEK_DAYS.map((day) => (
-                      <Form.Check
-                        inline
-                        key={day}
-                        id={`day_${day}`}
-                        label={day}
-                        type="checkbox"
-                        checked={daysAvailable[day]}
-                        onChange={() => toggleDay(day)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </Modal.Body>
 
             <Modal.Footer>

@@ -27,7 +27,12 @@ function FacilitiesPage() {
   // FacilitiesPage fonksiyonunun başında, diğer useState’lerin yanında:
   const [showFieldEditor, setShowFieldEditor] = useState(false);
   const [editingField, setEditingField] = useState(null);
-const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null, city: "", town: "" });
+  const [selectedLocation, setSelectedLocation] = useState({
+    lat: null,
+    lng: null,
+    city: "",
+    town: "",
+  });
   // Tıklandığında modalı aç
   const handleViewFields = (facility) => {
     setFieldsFacility(facility); // hem adı hem fields dizisi geliyor
@@ -104,15 +109,19 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
       addressDetails: elems.addressDetails.value,
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
-       latitude: selectedLocation.lat,
-    longitude: selectedLocation.lng,
+      latitude: selectedLocation.lat,
+      longitude: selectedLocation.lng,
       city: elems.city.value,
       town: elems.town.value,
       description: elems.description.value,
+      hasLockableCabinet: elems.hasLockableCabinet.checked,
+      hasLockerRoom: elems.hasLockerRoom.checked,
+      hasFirstAid: elems.hasFirstAid.checked,
+      hasSecurityCameras: elems.hasSecurityCameras.checked,
+      hasRefereeService: elems.hasRefereeService.checked,
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
       hasToilet: elems.hasToilet.checked,
-      hasSecurityCameras: elems.hasSecurityCameras,
       hasTransportService: elems.hasTransportService,
       hasParking: elems.hasParking,
       equipments: [],
@@ -172,8 +181,12 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
       description: elems.description.value,
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
-      hasToilet: elems.hasToilet.checked,
+      hasLockableCabinet: elems.hasLockableCabinet.checked,
+      hasLockerRoom: elems.hasLockerRoom.checked,
+      hasFirstAid: elems.hasFirstAid.checked,
       hasSecurityCameras: elems.hasSecurityCameras.checked,
+      hasRefereeService: elems.hasRefereeService.checked,
+      hasToilet: elems.hasToilet.checked,
       hasTransportService: elems.hasTransportService.checked,
       hasParking: elems.hasParking.checked,
       fields: [],
@@ -306,13 +319,13 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
                     />
                   </Form.Group>
                   <Form.Group className="mb-4">
-  <Form.Label>Konum Seç (Harita Üzerinden)</Form.Label>
-  <LocationPicker
-    onLocationChange={(loc) => setSelectedLocation(loc)}
-    city={selectedLocation.city}
-    town={selectedLocation.town}
-  />
-</Form.Group>
+                    <Form.Label>Konum Seç (Harita Üzerinden)</Form.Label>
+                    <LocationPicker
+                      onLocationChange={(loc) => setSelectedLocation(loc)}
+                      city={selectedLocation.city}
+                      town={selectedLocation.town}
+                    />
+                  </Form.Group>
                 </Col>
                 <Col>
                   <Form.Group controlId="name" className="mb-3">
@@ -376,15 +389,7 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
                       name="bankAccountInfo"
                       type="text"
                       defaultValue={selectedFacility?.bankAccountInfo || ""}
-                      required
-                      pattern="^TR\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{0,2}$"
-                      title="Lütfen geçerli bir IBAN girin. Örn: TR12 3456 7890 1234 5678 9012 34"
-                      style={{ textTransform: "uppercase" }}
                     />
-                    <Form.Control.Feedback type="invalid">
-                      Lütfen geçerli bir IBAN girin (örnek: TR12 3456 7890 1234
-                      5678 9012 34)
-                    </Form.Control.Feedback>
                   </Form.Group>
 
                   <Form.Group controlId="city" className="mb-3">
@@ -447,8 +452,18 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
                           defaultChecked={selectedFacility?.hasToilet || false}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col>
+
+                      <Form.Group controlId="hasFirstAid" className="mb-2">
+                        <Form.Check
+                          name="hasFirstAid"
+                          type="checkbox"
+                          label="İlk Yardım Kiti"
+                          defaultChecked={
+                            selectedFacility?.hasFirstAid || false
+                          }
+                        />
+                      </Form.Group>
+
                       <Form.Group
                         controlId="hasSecurityCameras"
                         className="mb-2"
@@ -456,13 +471,14 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
                         <Form.Check
                           name="hasSecurityCameras"
                           type="checkbox"
-                          label="Kamera"
+                          label="Güvenlik Kamerası"
                           defaultChecked={
                             selectedFacility?.hasSecurityCameras || false
                           }
                         />
                       </Form.Group>
-
+                    </Col>
+                    <Col>
                       <Form.Group
                         controlId="hasTransportService"
                         className="mb-2"
@@ -483,6 +499,45 @@ const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null,
                           type="checkbox"
                           label="Park Alanı"
                           defaultChecked={selectedFacility?.hasParking || false}
+                        />
+                      </Form.Group>
+
+                      <Form.Group
+                        controlId="hasLockableCabinet"
+                        className="mb-2"
+                      >
+                        <Form.Check
+                          name="hasLockableCabinet"
+                          type="checkbox"
+                          label="Dolap"
+                          defaultChecked={
+                            selectedFacility?.hasLockableCabinet || false
+                          }
+                        />
+                      </Form.Group>
+
+                      <Form.Group controlId="hasLockerRoom" className="mb-2">
+                        <Form.Check
+                          name="hasLockerRoom"
+                          type="checkbox"
+                          label="Soyunma Odası"
+                          defaultChecked={
+                            selectedFacility?.hasLockerRoom || false
+                          }
+                        />
+                      </Form.Group>
+
+                      <Form.Group
+                        controlId="hasRefereeService"
+                        className="mb-2"
+                      >
+                        <Form.Check
+                          name="hasRefereeService"
+                          type="checkbox"
+                          label="Hakem Hizmeti"
+                          defaultChecked={
+                            selectedFacility?.hasRefereeService || false
+                          }
                         />
                       </Form.Group>
                     </Col>

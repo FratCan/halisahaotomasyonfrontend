@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { update_password } from "../api/AuthApi";
+import { update_password, updateOwner } from "../api/AuthApi";
 import { 
   Button, 
   Container, 
@@ -10,9 +10,10 @@ import {
   Form, 
   Spinner,
   ListGroup,
-  Alert 
+  Alert,
+  Modal 
 } from "react-bootstrap";
-import { FaUser, FaKey, FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
+import { FaUser, FaKey, FaCalendarAlt, FaMapMarkerAlt, FaEdit } from "react-icons/fa";
 
 const PersonPage = () => {
   const [userData, setUserData] = useState(null);
@@ -24,8 +25,20 @@ const PersonPage = () => {
   });
   const [passwordMessage, setPasswordMessage] = useState("");
   const [validated, setValidated] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    userName: "",
+    email: "",
+    city: "",
+    town: "",
+    birthday: ""
+  });
+  const [editMessage, setEditMessage] = useState("");
 
-  useEffect(() => {
+  // fetchUserData fonksiyonunu useEffect dışına taşı
+  const fetchUserData = async () => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
 
@@ -35,28 +48,38 @@ const PersonPage = () => {
       return;
     }
 
-    const fetchUserData = async () => {
-      try {
-        const response = await axios.get(
-          `https://halisaha.up.railway.app/api/Auth/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setUserData(response.data);
-      } catch (err) {
-        const message =
-          typeof err.response?.data === "object"
-            ? err.response.data.Message || "Veriler alınamadı."
-            : err.response?.data || "Veriler alınamadı.";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      const response = await axios.get(
+        `https://halisaha.up.railway.app/api/Auth/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUserData(response.data);
+      // Edit formunu kullanıcı verileriyle doldur
+      setEditForm({
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        userName: response.data.userName,
+        email: response.data.email,
+        city: response.data.city,
+        town: response.data.town,
+        birthday: response.data.birthday.split('T')[0] // Tarih formatını düzelt
+      });
+    } catch (err) {
+      const message =
+        typeof err.response?.data === "object"
+          ? err.response.data.Message || "Veriler alınamadı."
+          : err.response?.data || "Veriler alınamadı.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
   }, []);
 
@@ -88,6 +111,44 @@ const PersonPage = () => {
     }
   };
 
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const updatedUser = await updateOwner({
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        userName: editForm.userName,
+        email: editForm.email,
+        city: editForm.city,
+        town: editForm.town,
+        birthday: editForm.birthday
+      });
+
+      setUserData(updatedUser);
+      setEditMessage("Bilgiler başarıyla güncellendi!");
+      fetchUserData(); // Güncellenen verileri tekrar çek
+      setTimeout(() => {
+        setShowEditModal(false);
+        setEditMessage("");
+      }, 1500);
+    } catch (err) {
+      const errorMessage =
+        typeof err.response?.data === "object"
+          ? err.response.data.Message || "Güncelleme sırasında bir hata oluştu."
+          : err.response?.data || "Güncelleme sırasında bir hata oluştu.";
+
+      setEditMessage(errorMessage);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   if (loading) {
     return (
       <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
@@ -109,11 +170,20 @@ const PersonPage = () => {
       <Row className="justify-content-center">
         <Col lg={8}>
           <h1 className="text-center mb-4">Profil Bilgileri</h1>
-          
+
           <Card className="shadow-sm mb-4">
-            <Card.Header className="bg-primary text-white">
-              <FaUser className="me-2" />
-              <strong>Kişisel Bilgiler</strong>
+            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+              <div>
+                <FaUser className="me-2" />
+                <strong>Kişisel Bilgiler</strong>
+              </div>
+              <Button 
+                variant="light" 
+                size="sm" 
+                onClick={() => setShowEditModal(true)}
+              >
+                <FaEdit className="me-1" /> Düzenle
+              </Button>
             </Card.Header>
             <Card.Body>
               <ListGroup variant="flush">
@@ -242,6 +312,120 @@ const PersonPage = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Bilgi Güncelleme Modalı */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Bilgileri Düzenle</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleEditSubmit}>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Ad</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="firstName"
+                    value={editForm.firstName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Soyad</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="lastName"
+                    value={editForm.lastName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Kullanıcı Adı</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="userName"
+                    value={editForm.userName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Şehir</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="city"
+                    value={editForm.city}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>İlçe</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="town"
+                    value={editForm.town}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-4">
+              <Form.Label>Doğum Tarihi</Form.Label>
+              <Form.Control
+                type="date"
+                name="birthday"
+                value={editForm.birthday}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+
+            {editMessage && (
+              <Alert 
+                variant={editMessage.includes("başarı") ? "success" : "danger"} 
+                className="mt-2"
+              >
+                {editMessage}
+              </Alert>
+            )}
+
+            <div className="d-grid">
+              <Button variant="primary" type="submit" size="lg">
+                Bilgileri Güncelle
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
