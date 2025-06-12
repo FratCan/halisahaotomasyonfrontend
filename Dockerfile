@@ -23,7 +23,7 @@ COPY --from=builder /app/build /usr/share/nginx/html
 # COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Railway varsayılan olarak 80 portunu dinler
-EXPOSE 80
+EXPOSE 81
 
 # nginx başlat
 CMD ["nginx", "-g", "daemon off;"]
