@@ -17,7 +17,7 @@ import {
   deleteField,
   uploadFieldPhotos,
 } from "../api/FieldsApi";
-
+import FacilitySelect from "../Components/FacilitySelect";
 import { getFacilities } from "../api/FacilityApi";
 
 // Haftanın günlerini sabit tutuyoruz
@@ -379,25 +379,11 @@ const handleEditClick = (id) => {
     <>
       <Container style={{ padding: 40 }}>
         <h2 className="text-center my-4">Saha Bilgisi</h2>
-        <Form.Group className="mb-4" controlId="facilitySelector">
-          <Form.Label>Bir Tesis Seçin:</Form.Label>
-          <Form.Select
-            value={facilityId || ""}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              setFacilityId(selectedId);
-              localStorage.setItem("selectedFacilityId", selectedId);
-            }}
-          >
-            <option value="">Tesis Seçin</option>
-            {facilities.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
-
+      <FacilitySelect
+   ownerId={ownerId}
+   facilityId={facilityId}
+   onChange={setFacilityId}
+ />
         {/* Mevcut Sahaları Listele */}
         {Array.from({ length: Math.ceil(fields.length / 3) }).map((_, ri) => (
           <Row key={ri} className="mb-4 justify-content-center">

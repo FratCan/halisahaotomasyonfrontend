@@ -1,86 +1,65 @@
-import React from 'react';
-import { Table, Button } from 'react-bootstrap';
+import React from "react";
+import { Table, Button } from "react-bootstrap";
+
+const js2idx = (js) => (js + 6) % 7;   // Sun(0) → 6, Mon(1) → 0 …
 
 const Calendar = ({
   currentDate,
   setCurrentDate,
   weekDays,
-  handleSlotClick,
   hoursRange,
-  isAvailable,
-  field
+  handleSlotClick,
+  field,                 // eski kullanım
+  weeklyOpenings,        // yeni kullanım
+  exceptions,
+  isAvailable = true,
 }) => {
-  const goToPreviousWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() - 7);
-    setCurrentDate(newDate);
+  const ymd = (d) => d.toISOString().slice(0, 10);
+
+  /* Öncelik: explicit prop → field */
+  const allWeekly  = weeklyOpenings ?? field?.weeklyOpenings ?? [];
+  const allExcepts = exceptions     ?? field?.exceptions      ?? [];
+  const availFlag  = isAvailable    && (field?.isAvailable ?? true);
+
+  const exceptionFor = (d) =>
+    allExcepts.find((ex) => ymd(d) === ex.date?.slice(0, 10));
+
+  const openingFor = (d) =>
+    allWeekly.find((w) => Number(w.dayOfWeek) === js2idx(d.getDay()));
+
+  const slotOpen = (d, h) => {
+    if (!availFlag) return false;
+
+    const ex = exceptionFor(d);
+    if (ex) return ex.isOpen;
+
+    const o = openingFor(d);
+    if (!o) return false;
+
+    const s = parseInt(o.startTime.slice(0, 2), 10);
+    const e = parseInt(o.endTime.slice(0, 2), 10);
+    return h >= s && h < e;
   };
 
-  const goToNextWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + 7);
-    setCurrentDate(newDate);
-  };
+  const dayOpen = (d) => slotOpen(d, hoursRange[0] ?? 0);
 
-  // İngilizce gün isimlerini Türkçeye çevirme fonksiyonu
-  const translateDayToEnglish = (turkishDay) => {
-    const daysMap = {
-      'Pazartesi': 'Monday',
-      'Salı': 'Tuesday',
-      'Çarşamba': 'Wednesday',
-      'Perşembe': 'Thursday',
-      'Cuma': 'Friday',
-      'Cumartesi': 'Saturday',
-      'Pazar': 'Sunday'
-    };
-    return daysMap[turkishDay] || turkishDay;
-  };
-
-  const getDayName = (date) => {
-    return date.toLocaleDateString("tr-TR", { weekday: "long" });
-  };
-
-  // Field'dan gelen openingDays'e göre gün kontrolü (İngilizce gün isimleri için)
-  const isDayOpen = (day) => {
-    const turkishDayName = getDayName(day);
-    const englishDayName = translateDayToEnglish(turkishDayName);
-    return field?.openingDays?.includes(englishDayName) ?? false;
-  };
-
-  // Kombine availability kontrolü
-  const checkAvailability = (day, hour) => {
-    // 1. Önce field'ın genel availability durumu
-    if (field?.isAvailable === false) return false;
-    
-    // 2. Günün açık olup olmadığını kontrol et
-    if (!isDayOpen(day)) return false;
-    
-    // 3. Saat aralığı kontrolü
-    const h = parseInt(hour, 10);
-    const startHour = parseInt(field?.startTime?.split(':')[0]) || 0;
-    const endHour = parseInt(field?.endTime?.split(':')[0]) || 24;
-    
-    if (h < startHour || h >= endHour) return false;
-    
-    // 4. Eğer harici bir isAvailable fonksiyonu varsa onu da kontrol et
-    if (typeof isAvailable === 'function') {
-      return isAvailable(day, hour);
-    }
-    
-    return true;
+  const shiftWeek = (k) => {
+    const x = new Date(currentDate);
+    x.setDate(currentDate.getDate() + k * 7);
+    setCurrentDate(x);
   };
 
   return (
     <div className="border border-light p-3">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <Button variant="light" onClick={goToPreviousWeek}>
+        <Button variant="light" onClick={() => shiftWeek(-1)}>
           &larr; Önceki Hafta
         </Button>
         <h4 className="mb-0">
-          {weekDays.length > 0 &&
+          {weekDays.length &&
             `${weekDays[0].toLocaleDateString("tr-TR")} - ${weekDays[6].toLocaleDateString("tr-TR")}`}
         </h4>
-        <Button variant="light" onClick={goToNextWeek}>
+        <Button variant="light" onClick={() => shiftWeek(1)}>
           Sonraki Hafta &rarr;
         </Button>
       </div>
@@ -89,56 +68,47 @@ const Calendar = ({
         <thead>
           <tr>
             <th>Saat</th>
-            {weekDays.map((day, idx) => {
-              const isOpen = isDayOpen(day);
-              return (
-                <th 
-                  key={idx}
-                  style={{
-                    backgroundColor: isOpen ? '#e8f5e9' : '#ffebee',
-                    color: isOpen ? 'black' : 'gray'
-                  }}
-                >
-                  {getDayName(day)} <br /> 
-                  {day.toLocaleDateString("tr-TR")}
-                  <div style={{ fontSize: '0.8rem' }}>
-                    {isOpen ? '(Açık)' : '(Kapalı)'}
-                  </div>
-                </th>
-              );
-            })}
+            {weekDays.map((d, i) => (
+              <th
+                key={i}
+                style={{
+                  backgroundColor: dayOpen(d) ? "#e8f5e9" : "#ffebee",
+                  color: dayOpen(d) ? "black" : "gray",
+                }}
+              >
+                {d.toLocaleDateString("tr-TR", { weekday: "long" })} <br />
+                {d.toLocaleDateString("tr-TR")}
+                <div style={{ fontSize: "0.8rem" }}>
+                  {dayOpen(d) ? "(Açık)" : "(Kapalı)"}
+                </div>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {hoursRange.map((hour) => (
-            <tr key={hour}>
-              <td>{`${hour.toString().padStart(2, "0")}:00`}</td>
-              {weekDays.map((day, idx) => {
-                const available = checkAvailability(day, hour);
+          {hoursRange.map((h) => (
+            <tr key={h}>
+              <td>{`${h.toString().padStart(2, "0")}:00`}</td>
+              {weekDays.map((d, i) => {
+                const ok = slotOpen(d, h);
                 return (
                   <td
-                    key={idx}
-                    style={{
-                      backgroundColor: available ? "#d4edda" : "#f8d7da",
-                      cursor: available ? "pointer" : "not-allowed",
-                      textAlign: "center",
-                      color: available ? "black" : "gray",
-                    }}
-                    onClick={() => {
-                      if (!available) return;
+                    key={i}
+                    onClick={() =>
+                      ok &&
                       handleSlotClick({
-                        day: day.toLocaleDateString("tr-TR"),
-                        hour: `${hour.toString().padStart(2, "0")}:00`,
-                        status: "Available",
-                        reservationInfo: {
-                          name: "Rezervasyon Yok",
-                          phone: "-",
-                          email: "-",
-                        },
-                      });
+                        day: d.toLocaleDateString("tr-TR"),
+                        hour: `${h.toString().padStart(2, "0")}:00`,
+                      })
+                    }
+                    style={{
+                      backgroundColor: ok ? "#d4edda" : "#f8d7da",
+                      cursor: ok ? "pointer" : "not-allowed",
+                      textAlign: "center",
+                      color: ok ? "black" : "gray",
                     }}
                   >
-                    {available ? "Müsait" : "Kapalı"}
+                    {ok ? "Müsait" : "Kapalı"}
                   </td>
                 );
               })}

@@ -1,38 +1,79 @@
+// pages/ReservationPage.jsx
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Modal, Button, ListGroup } from "react-bootstrap";
+
 import FieldCard from "../Components/FieldCard";
 import Calendar from "../Components/Calendar";
 import ReservationFilter from "../Components/ReservationFilter";
+import FacilitySelect from "../Components/FacilitySelect"; // 👈 yeni
+
 import { getAllFields } from "../api/FieldsApi";
 
-const ReservationPage = () => {
-  const [fields, setFields] = useState([]);
+const ownerId = Number(localStorage.getItem("userId") ?? 0);
+
+export default function ReservationPage() {
+  /*──────── STATE ────────*/
+  const [facilityId, setFacilityId] = useState(
+    localStorage.getItem("selectedFacilityId") || ""
+  );
+
+  const [allFields, setAllFields] = useState([]); // tüm sahalar (owner’a ait)
+  const [fields, setFields] = useState([]); // seçili tesise ait
   const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // 1. Load fields on mount
+  const [loadingFields, setLoadingFields] = useState(true);
+
+  /*──────── SAHALARI YÜKLE ────────*/
   useEffect(() => {
-    const fetchFields = async () => {
+    if (!ownerId) return;
+
+    (async () => {
+      setLoadingFields(true);
       try {
-        const response = await getAllFields();
-        setFields(response);
-        setLoading(false);
-      } catch (error) {
-        console.error("Saha verisi alınamadı:", error);
-        setLoading(false);
+        const list = (await getAllFields(ownerId)) ?? [];
+        setAllFields(Array.isArray(list) ? list : []);
+      } catch (e) {
+        console.error("Saha verisi alınamadı:", e);
+        setAllFields([]);
+      } finally {
+        setLoadingFields(false);
       }
-    };
+    })();
+  }, [ownerId]);
 
-    fetchFields();
-  }, []);
+  /*──────── TESİS FİLTRESİ ────────*/
+  useEffect(() => {
+    if (!facilityId) {
+      setFields([]);
+      return;
+    }
+    const filtered = allFields.filter(
+      (f) => f.facilityId === Number(facilityId)
+    );
+    setFields(filtered);
+    setSelectedFieldIndex(0);
+  }, [facilityId, allFields]);
 
-  // 2. Get the currently selected field
+  /*──────── YARDIMCI HESAPLAR ────────*/
   const selectedField = fields[selectedFieldIndex] || {};
 
-  // 3. Parse working hours
+  // 3. Çalışma saatleri: weeklyOpenings > hours alanları > default
   const parseWorkingHours = () => {
+    if (
+      Array.isArray(selectedField.weeklyOpenings) &&
+      selectedField.weeklyOpenings.length
+    ) {
+      const starts = selectedField.weeklyOpenings.map((w) =>
+        parseInt(w.startTime.split(":")[0], 10)
+      );
+      const ends = selectedField.weeklyOpenings.map((w) =>
+        parseInt(w.endTime.split(":")[0], 10)
+      );
+      return [Math.min(...starts), Math.max(...ends)];
+    }
     if (selectedField.hours) {
       return selectedField.hours
         .split(" - ")
@@ -43,122 +84,142 @@ const ReservationPage = () => {
         parseInt(selectedField.endTime.split(":")[0], 10),
       ];
     }
-    return [9, 21]; // Default hours
+    return [9, 21];
   };
 
   const [startHour, endHour] = parseWorkingHours();
   const hoursRange = Array.from(
-    { length: endHour - startHour },
+    { length: Math.max(endHour - startHour, 0) },
     (_, i) => startHour + i
   );
 
-  // 4. Week days generator
   const getWeekDays = () => {
-    const startOfWeek = new Date(currentDate);
-    const day = startOfWeek.getDay();
-    startOfWeek.setDate(currentDate.getDate() - day);
+    const start = new Date(currentDate);
+    const dow = start.getDay(); // 0 = Pazar
+    start.setDate(currentDate.getDate() - dow);
     return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
       return d;
     });
   };
   const weekDays = getWeekDays();
 
-  // 5. Enhanced availability check
-  const isAvailable = (day, hour) => {
-    const dayName = day.toLocaleDateString("tr-TR", { weekday: "long" });
-    const h = parseInt(hour, 10);
-
-    // Check if field is open on this day
-    if (
-      selectedField.openingDays &&
-      !selectedField.openingDays.includes(dayName)
-    ) {
-      return false;
-    }
-
-    // Check if within working hours
-    return h >= startHour && h < endHour;
-  };
-
-  // 6. Slot handlers
+  /*──────── SLOT HANDLERS ────────*/
   const handleSlotClick = (slot) => setSelectedSlot(slot);
   const handleCloseModal = () => setSelectedSlot(null);
 
-  if (loading) {
+  /*──────── LOADING / EMPTY ────────*/
+  if (loadingFields)
     return (
       <Container className="text-center py-5">
-        <em>Saha bilgileri yükleniyor...</em>
+        <em>Veriler yükleniyor…</em>
       </Container>
     );
-  }
 
-  if (!fields.length) {
+  if (!facilityId)
     return (
-      <Container className="text-center py-5">
-        <em>Yüklenebilecek saha bulunamadı</em>
+      <Container style={{ padding: 40 }}>
+        <FacilitySelect
+          ownerId={ownerId}
+          facilityId={facilityId}
+          onChange={setFacilityId}
+        />
+        <p className="text-center mt-4">
+          <em>Önce bir tesis seçin.</em>
+        </p>
       </Container>
     );
-  }
 
+  if (!fields.length)
+    return (
+      <Container style={{ padding: 40 }}>
+        <FacilitySelect
+          ownerId={ownerId}
+          facilityId={facilityId}
+          onChange={setFacilityId}
+        />
+        <p className="text-center mt-4">
+          <em>Bu tesise ait saha bulunamadı.</em>
+        </p>
+      </Container>
+    );
+
+  /*──────── UI ────────*/
   return (
     <Container
       fluid
       className="d-flex justify-content-center align-items-center"
     >
       <Row className="w-100 my-4">
-        {/* Left: FieldCard */}
-        <Col md={3} className="d-flex justify-content-center">
-          <div className="field-card-container">
-            <FieldCard field={selectedField} showEditButton={false} />
-          </div>
+        {/*■■■ TESİS SEÇİCİ ■■■*/}
+        <Col xs={12} className="mb-3">
+          <FacilitySelect
+            ownerId={ownerId}
+            facilityId={facilityId}
+            onChange={setFacilityId}
+          />
         </Col>
 
-        {/* Right: Calendar */}
+        {/* LEFT: FieldCard */}
+        <Col md={3} className="d-flex justify-content-center">
+          <FieldCard field={selectedField} showEditButton={false} />
+        </Col>
+
+        {/* RIGHT: Calendar */}
         <Col md={9} className="border border-light shadow">
           <div className="d-flex justify-content-between align-items-center mt-3">
-            <Button
-              variant="light"
-              onClick={() =>
-                setSelectedFieldIndex((i) =>
-                  i === 0 ? fields.length - 1 : i - 1
-                )
-              }
-            >
-              &larr; Önceki Saha
-            </Button>
-            <h5>{selectedField.name}</h5>
-            <Button
-              variant="light"
-              onClick={() =>
-                setSelectedFieldIndex((i) =>
-                  i === fields.length - 1 ? 0 : i + 1
-                )
-              }
-            >
-              Sonraki Saha &rarr;
-            </Button>
+            {fields.length > 1 && (
+              <>
+                <Button
+                  variant="light"
+                  onClick={() =>
+                    setSelectedFieldIndex((i) =>
+                      i === 0 ? fields.length - 1 : i - 1
+                    )
+                  }
+                >
+                  &larr; Önceki Saha
+                </Button>
+
+                <h5 className="m-0">{selectedField.name}</h5>
+
+                <Button
+                  variant="light"
+                  onClick={() =>
+                    setSelectedFieldIndex((i) =>
+                      i === fields.length - 1 ? 0 : i + 1
+                    )
+                  }
+                >
+                  Sonraki Saha &rarr;
+                </Button>
+              </>
+            )}
+            {fields.length === 1 && (
+              <h5 className="m-0">{selectedField.name}</h5>
+            )}
           </div>
+
           <Calendar
             currentDate={currentDate}
             setCurrentDate={setCurrentDate}
             weekDays={weekDays}
+            hoursRange={Array.from({ length: 17 }, (_, i) => 8 + i)}
             handleSlotClick={handleSlotClick}
-            hoursRange={hoursRange}
-            field={selectedField} // openingDays ve isAvailable burada
+            field={fields[selectedFieldIndex]} // ← yeterli
           />
         </Col>
 
         <ReservationFilter />
       </Row>
 
-      {/* Reservation Modal */}
+      {/* Rezervasyon Bilgi Modalı */}
       {selectedSlot && (
         <Modal show onHide={handleCloseModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              Rezervasyon Bilgisi – {selectedSlot.day}, {selectedSlot.hour}:00
+              Rezervasyon – {selectedSlot.day}, {selectedSlot.hour}:00
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -183,6 +244,4 @@ const ReservationPage = () => {
       )}
     </Container>
   );
-};
-
-export default ReservationPage;
+}
