@@ -13,6 +13,9 @@ import { AuthProvider } from "./Context/AuthContext";
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PersonPage from './pages/PersonPage';
 import { useState } from "react";
+// App.js veya index.js
+import "leaflet/dist/leaflet.css";
+
 
 function Appcontent() {
   const location = useLocation();

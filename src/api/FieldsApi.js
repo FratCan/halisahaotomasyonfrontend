@@ -27,6 +27,19 @@ export const getFields = async (facilityId) => {
     throw error;
   }
 };
+
+export const getFieldsOwner = async (ownerId) => {
+  if (!ownerId) throw new Error("OwnerId parametresi zorunludur!");
+
+  try {
+    const { data } = await axios.get(`${API_URL}?ownerId=${ownerId}`);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Sahaları çekerken hata oluştu:", error);
+    throw error;
+  }
+};
+
 export const createField = async (fieldData) => {
   try {
     const { data } = await axios.post(API_URL, fieldData, {

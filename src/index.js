@@ -5,6 +5,8 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { FieldProvider } from "./Components/FieldContext"; // FieldProvider'ı buraya ekliyoruz
+// App.js veya index.js
+import "leaflet/dist/leaflet.css";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

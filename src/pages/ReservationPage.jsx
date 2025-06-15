@@ -1,12 +1,11 @@
-// pages/ReservationPage.jsx
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Modal, Button, ListGroup } from "react-bootstrap";
 
 import FieldCard from "../Components/FieldCard";
-import Calendar from "../Components/Calendar";
+import Calendar from "../Components/Calendarr";
 import ReservationFilter from "../Components/ReservationFilter";
-import FacilitySelect from "../Components/FacilitySelect"; // 👈 yeni
-
+import FacilitySelect from "../Components/FacilitySelect";
+import { getReservations } from "../api/ReservationApi";
 import { getAllFields } from "../api/FieldsApi";
 
 const ownerId = Number(localStorage.getItem("userId") ?? 0);
@@ -17,10 +16,10 @@ export default function ReservationPage() {
     localStorage.getItem("selectedFacilityId") || ""
   );
 
-  const [allFields, setAllFields] = useState([]); // tüm sahalar (owner’a ait)
+  const [allFields, setAllFields] = useState([]); // tüm sahalar (owner'a ait)
   const [fields, setFields] = useState([]); // seçili tesise ait
   const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
-
+  const [reservations, setReservations] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState(null);
 
@@ -34,6 +33,7 @@ export default function ReservationPage() {
       setLoadingFields(true);
       try {
         const list = (await getAllFields(ownerId)) ?? [];
+        console.log("Loaded fields:", list); // Debug için
         setAllFields(Array.isArray(list) ? list : []);
       } catch (e) {
         console.error("Saha verisi alınamadı:", e);
@@ -53,46 +53,80 @@ export default function ReservationPage() {
     const filtered = allFields.filter(
       (f) => f.facilityId === Number(facilityId)
     );
+    console.log("Filtered fields for facility:", facilityId, filtered); // Debug için
     setFields(filtered);
     setSelectedFieldIndex(0);
   }, [facilityId, allFields]);
 
+  useEffect(() => {
+    const field = fields[selectedFieldIndex];
+    if (!field) return;
+    /* istersen buraya rezervasyon fetch’i ekle */
+    (async () => {
+      try {
+        const data = await getReservations(field.id, "week"); // api'ne göre
+        setReservations(Array.isArray(data) ? data : []);
+      } catch (_) {
+        setReservations([]);
+      }
+    })();
+  }, [fields, selectedFieldIndex]);
   /*──────── YARDIMCI HESAPLAR ────────*/
   const selectedField = fields[selectedFieldIndex] || {};
 
-  // 3. Çalışma saatleri: weeklyOpenings > hours alanları > default
+  // Çalışma saatlerini hesapla
   const parseWorkingHours = () => {
+    // Önce weeklyOpenings kontrol et
     if (
       Array.isArray(selectedField.weeklyOpenings) &&
-      selectedField.weeklyOpenings.length
+      selectedField.weeklyOpenings.length > 0
     ) {
-      const starts = selectedField.weeklyOpenings.map((w) =>
+      const allStartTimes = selectedField.weeklyOpenings.map((w) =>
         parseInt(w.startTime.split(":")[0], 10)
       );
-      const ends = selectedField.weeklyOpenings.map((w) =>
-        parseInt(w.endTime.split(":")[0], 10)
+      const allEndTimes = selectedField.weeklyOpenings.map((w) =>
+        (w.endTime.startsWith("00") ? 23 : parseInt(w.endTime, 10))
       );
-      return [Math.min(...starts), Math.max(...ends)];
+      const minStart = Math.min(...allStartTimes);
+      const maxEnd = Math.max(...allEndTimes);
+      console.log("Working hours from weeklyOpenings:", minStart, maxEnd);
+      return [minStart, maxEnd];
     }
+
+    // Fallback: hours alanı
     if (selectedField.hours) {
-      return selectedField.hours
-        .split(" - ")
-        .map((t) => parseInt(t.split(":")[0], 10));
-    } else if (selectedField.startTime && selectedField.endTime) {
+      const hoursParts = selectedField.hours.split(" - ");
+      if (hoursParts.length === 2) {
+        return [
+          parseInt(hoursParts[0].split(":")[0], 10),
+          parseInt(hoursParts[1].split(":")[0], 10),
+        ];
+      }
+    }
+
+    // Fallback: startTime/endTime alanları
+    if (selectedField.startTime && selectedField.endTime) {
       return [
         parseInt(selectedField.startTime.split(":")[0], 10),
         parseInt(selectedField.endTime.split(":")[0], 10),
       ];
     }
-    return [9, 21];
+
+    // Default saatler
+    console.log("Using default working hours: 8-22");
+    return [8, 22];
   };
 
   const [startHour, endHour] = parseWorkingHours();
+  // ► Bitiş saati dâhil (inclusive)
   const hoursRange = Array.from(
-    { length: Math.max(endHour - startHour, 0) },
+    { length: Math.max(endHour - startHour, 0) + 1 },
     (_, i) => startHour + i
   );
 
+  console.log("Hours range:", hoursRange); // Debug için
+
+  // Hafta günlerini hesapla
   const getWeekDays = () => {
     const start = new Date(currentDate);
     const dow = start.getDay(); // 0 = Pazar
@@ -106,7 +140,11 @@ export default function ReservationPage() {
   const weekDays = getWeekDays();
 
   /*──────── SLOT HANDLERS ────────*/
-  const handleSlotClick = (slot) => setSelectedSlot(slot);
+  const handleSlotClick = (slot) => {
+    console.log("Slot clicked:", slot);
+    setSelectedSlot(slot);
+  };
+
   const handleCloseModal = () => setSelectedSlot(null);
 
   /*──────── LOADING / EMPTY ────────*/
@@ -144,7 +182,12 @@ export default function ReservationPage() {
         </p>
       </Container>
     );
-
+  const changeWeek = (delta) =>
+    setCurrentDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7 * delta);
+      return d;
+    });
   /*──────── UI ────────*/
   return (
     <Container
@@ -200,14 +243,14 @@ export default function ReservationPage() {
               <h5 className="m-0">{selectedField.name}</h5>
             )}
           </div>
-
           <Calendar
             currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
             weekDays={weekDays}
-            hoursRange={Array.from({ length: 17 }, (_, i) => 8 + i)}
-            handleSlotClick={handleSlotClick}
-            field={fields[selectedFieldIndex]} // ← yeterli
+            hoursRange={hoursRange}
+            field={selectedField}
+            reservations={reservations}
+            onSlotClick={handleSlotClick}
+            changeWeek={changeWeek}
           />
         </Col>
 
@@ -219,21 +262,28 @@ export default function ReservationPage() {
         <Modal show onHide={handleCloseModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              Rezervasyon – {selectedSlot.day}, {selectedSlot.hour}:00
+              Rezervasyon – {selectedSlot.day}, {selectedSlot.hour}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <ListGroup variant="flush">
-              <ListGroup.Item>
-                <strong>İsim:</strong> {selectedSlot.reservationInfo.name}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <strong>Email:</strong> {selectedSlot.reservationInfo.email}
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <strong>Telefon:</strong> {selectedSlot.reservationInfo.phone}
-              </ListGroup.Item>
-            </ListGroup>
+            {selectedSlot.reservationInfo ? (
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>İsim:</strong> {selectedSlot.reservationInfo.name}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Email:</strong> {selectedSlot.reservationInfo.email}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Telefon:</strong> {selectedSlot.reservationInfo.phone}
+                </ListGroup.Item>
+              </ListGroup>
+            ) : (
+              <div className="text-center">
+                <p>Bu slot müsait durumda.</p>
+                <Button variant="primary">Rezervasyon Yap</Button>
+              </div>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>

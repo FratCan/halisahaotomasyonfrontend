@@ -22,13 +22,13 @@ import { getFacilities } from "../api/FacilityApi";
 
 // Haftanın günlerini sabit tutuyoruz
 const WEEK_DAYS = [
+  "Sunday",
   "Monday",
   "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
-  "Sunday",
 ];
 
 function FieldsPage({ facilityId, setFacilityId }) {
@@ -101,67 +101,66 @@ function FieldsPage({ facilityId, setFacilityId }) {
   }, [weeklyOpenings]);
 
   // Düzenle butonuna tıklayınca
-const handleEditClick = (id) => {
-  const fresh = fields.find((f) => f.id === id);
-  setSelectedField(fresh);
+  const handleEditClick = (id) => {
+    const fresh = fields.find((f) => f.id === id);
+    setSelectedField(fresh);
 
-  setPhotoPreview(
-    fresh.photoUrls?.[0]
-      ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
-      : ""
-  );
+    setPhotoPreview(
+      fresh.photoUrls?.[0]
+        ? `https://halisaha.up.railway.app/${fresh.photoUrls[0]}`
+        : ""
+    );
 
-  /*──── weeklyOpenings: string → index dönüşümü ────*/
-  setWeeklyOpenings(
-    dedupeWeekly(
-      Array.isArray(fresh.weeklyOpenings)
-        ? fresh.weeklyOpenings
-            .map((w) => {
-              const idx =
-                typeof w.dayOfWeek === "number"
-                  ? w.dayOfWeek                                    // zaten 0-6
-                  : WEEK_DAYS.findIndex(
-                      (d) =>
-                        d.toLowerCase() ===
-                        String(w.dayOfWeek).toLowerCase()          // "Monday" → 1
-                    );
-              return idx === -1
-                ? null                                             // eşleşmezse at
-                : { ...w, dayOfWeek: idx };
-            })
-            .filter(Boolean)                                       // null’ları sil
-        : WEEK_DAYS.map((_, i) => ({
-            dayOfWeek: i,
-            startTime: "08:00:00",
-            endTime: "23:00:00",
+    /*──── weeklyOpenings: string → index dönüşümü ────*/
+    setWeeklyOpenings(
+      dedupeWeekly(
+        Array.isArray(fresh.weeklyOpenings)
+          ? fresh.weeklyOpenings
+              .map((w) => {
+                const idx =
+                  typeof w.dayOfWeek === "number"
+                    ? w.dayOfWeek // zaten 0-6
+                    : WEEK_DAYS.findIndex(
+                        (d) =>
+                          d.toLowerCase() === String(w.dayOfWeek).toLowerCase() // "Monday" → 1
+                      );
+                return idx === -1
+                  ? null // eşleşmezse at
+                  : { ...w, dayOfWeek: idx };
+              })
+              .filter(Boolean) // null’ları sil
+          : WEEK_DAYS.map((_, i) => ({
+              dayOfWeek: i,
+              startTime: "08:00:00",
+              endTime: "23:00:00",
+            }))
+      )
+    );
+
+    /*──── exceptions & diğer state’ler ────*/
+    setExceptions(
+      Array.isArray(fresh.exceptions)
+        ? fresh.exceptions.map((ex) => ({
+            date: ex.date?.slice(0, 10),
+            isOpen: ex.isOpen,
           }))
-    )
-  );
+        : []
+    );
 
-  /*──── exceptions & diğer state’ler ────*/
-  setExceptions(
-    Array.isArray(fresh.exceptions)
-      ? fresh.exceptions.map((ex) => ({
-          date: ex.date?.slice(0, 10),
-          isOpen: ex.isOpen,
-        }))
-      : []
-  );
+    const newDaysAvailable = WEEK_DAYS.reduce(
+      (acc, day) => ({
+        ...acc,
+        [day]:
+          Array.isArray(fresh.openingDays) && fresh.openingDays.includes(day),
+      }),
+      {}
+    );
 
-  const newDaysAvailable = WEEK_DAYS.reduce(
-    (acc, day) => ({
-      ...acc,
-      [day]:
-        Array.isArray(fresh.openingDays) && fresh.openingDays.includes(day),
-    }),
-    {}
-  );
-
-  setDaysAvailable(newDaysAvailable);
-  setFormAvailable(fresh.isAvailable);
-  setIsCreateMode(false);
-  setShowModal(true);
-};
+    setDaysAvailable(newDaysAvailable);
+    setFormAvailable(fresh.isAvailable);
+    setIsCreateMode(false);
+    setShowModal(true);
+  };
 
   // "+" kartına tıklayınca
   const handleCreateClick = () => {
@@ -379,11 +378,11 @@ const handleEditClick = (id) => {
     <>
       <Container style={{ padding: 40 }}>
         <h2 className="text-center my-4">Saha Bilgisi</h2>
-      <FacilitySelect
-   ownerId={ownerId}
-   facilityId={facilityId}
-   onChange={setFacilityId}
- />
+        <FacilitySelect
+          ownerId={ownerId}
+          facilityId={facilityId}
+          onChange={setFacilityId}
+        />
         {/* Mevcut Sahaları Listele */}
         {Array.from({ length: Math.ceil(fields.length / 3) }).map((_, ri) => (
           <Row key={ri} className="mb-4 justify-content-center">

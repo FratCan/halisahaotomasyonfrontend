@@ -1,222 +1,213 @@
-import React, { useState,useEffect } from "react";
-import { Container, Row, Col, Card, Button, Nav } from "react-bootstrap";
-//import { useFieldContext } from "../Components/FieldContext"; // Import the context
-import { getAllFields } from "../api/FieldsApi"; // API'den saha verilerini almak için fonksiyon
-import { Offcanvas } from "react-bootstrap";
+import React, { useState, useEffect, useMemo } from "react";
+import { Container, Row, Col, Card, Button, Nav, Badge } from "react-bootstrap";
+import { 
+  FaCalendarAlt, 
+  FaChevronLeft, 
+  FaChevronRight,
+  FaFutbol
+} from "react-icons/fa";
+import { getFieldsOwner } from "../api/FieldsApi";
+import { getReservations } from "../api/ReservationApi";
 
+const START_HOUR = 7;
+const END_HOUR = 23;
 
+const WEEK_DAYS = [
+  "Sunday", "Monday", "Tuesday",
+  "Wednesday", "Thursday", "Friday", "Saturday",
+];
 
-function HomePage() {
-  //const { fields } = useFieldContext(); // Access fields from context
-  //const [selectedField, setSelectedField] = useState(
-  //  fields[0]?.name || "Saha 1"
-  //);
-const [showSidebar, setShowSidebar] = useState(false);
+const toWeekIndex = (dow) =>
+  typeof dow === "number"
+    ? dow
+    : WEEK_DAYS.findIndex(
+        (d) => d.toLowerCase() === String(dow).toLowerCase()
+      );
 
-const handleCloseSidebar = () => setShowSidebar(false);
-const handleShowSidebar = () => setShowSidebar(true);
+export default function HomePage() {
+  const ownerId = Number(localStorage.getItem("userId"));
+  const [fields, setFields] = useState([]);
+  const [selectedField, setField] = useState(null);
+  const [selectedDate, setDate] = useState(new Date());
+  const [reservations, setResv] = useState([]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getFieldsOwner(ownerId);
+        setFields(data);
+        setField(data[0] ?? null);
+      } catch (err) {
+        console.error("Sahalar alınamadı:", err);
+      }
+    })();
+  }, [ownerId]);
 
-const [field, setField] = useState([]);
-const [selectedField, setSelectedField] = useState("Saha 1");
+  useEffect(() => {
+    if (!selectedField) return;
+    (async () => {
+      try {
+        const data = await getReservations(selectedField.id, "all");
+        setResv(Array.isArray(data) ? data : []);
+      } catch (_) {}
+    })();
+  }, [selectedField]);
 
-useEffect(() => {
-  const fetchFields = async () => {
-    try {
-      const response = await getAllFields(); // API'den veriyi al
-      setField(response); // response.data olabilir, getFields nasıl yazıldığına bağlı
-      setSelectedField(response[0]?.name || "Saha 1");
-    } catch (error) {
-      console.error("Saha verisi alınamadı:", error);
+  const slotsForDay = useMemo(() => {
+    if (!selectedField) return [];
+
+    const weekDay = selectedDate.getDay();
+    const isoDate = selectedDate.toISOString().slice(0, 10);
+
+    const exc = (selectedField.exceptions ?? []).find(
+      (ex) => ex.date?.slice(0, 10) === isoDate
+    );
+    const isClosedByException = exc && exc.isOpen === false;
+    const isForcedOpen = exc && exc.isOpen === true;
+
+    const openHours = new Set();
+    if (!isClosedByException) {
+      if (isForcedOpen || (selectedField.weeklyOpenings ?? []).length === 0) {
+        for (let h = START_HOUR; h <= END_HOUR; h++) openHours.add(h);
+      } else {
+        (selectedField.weeklyOpenings ?? [])
+          .filter((w) => toWeekIndex(w.dayOfWeek) === weekDay)
+          .forEach((w) => {
+            const s = Number((w.startTime || "00:00").slice(0, 2));
+            const e = Number((w.endTime || "24:00").slice(0, 2));
+            for (let h = s; h < e; h++) openHours.add(h);
+          });
+      }
+    }
+
+    const reserved = new Set(
+      reservations
+        .filter((r) => r.slotStart.slice(0, 10) === isoDate)
+        .map((r) => new Date(r.slotStart).getHours())
+    );
+
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10) === isoDate;
+    const slots = [];
+
+    for (let h = START_HOUR; h <= END_HOUR; h++) {
+      const label = `${String(h).padStart(2, "0")}:00`;
+      let status;
+
+      if (isClosedByException || (!openHours.has(h))) status = "Kapalı";
+      else if (reserved.has(h)) status = "Rezerve";
+      else if ((today && h < now.getHours()) || (!today && selectedDate < now)) status = "Geçmiş";
+      else status = "Boş";
+
+      slots.push({ time: label, status });
+    }
+    return slots;
+  }, [selectedField, reservations, selectedDate]);
+
+  const formatDate = (d) =>
+    d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" });
+
+  const changeDay = (delta) =>
+    setDate((prev) => {
+      const n = new Date(prev);
+      n.setDate(n.getDate() + delta);
+      return n;
+    });
+
+  const getStatusVariant = (status) => {
+    switch(status) {
+      case "Boş": return "outline-success";
+      case "Rezerve": return "outline-danger";
+      case "Geçmiş": return "outline-warning";
+      case "Kapalı": return "outline-secondary";
+      default: return "outline-primary";
     }
   };
 
-  fetchFields();
-}, []);
-
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  // 📅 Tarih formatlayan fonksiyon
-  const formatDate = (date) => {
-    return date.toLocaleDateString("tr-TR", {
-      day: "numeric",
-      month: "long",
-      weekday: "long",
-    });
-  };
-
-  // 🔙 Bir gün geri git
-  const handlePreviousDate = () => {
-    setSelectedDate((prev) => {
-      const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() - 1);
-      return newDate;
-    });
-  };
-
-  // 🔜 Bir gün ileri git
-  const handleNextDate = () => {
-    setSelectedDate((prev) => {
-      const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() + 1);
-      return newDate;
-    });
-  };
-
-  const timeSlots = [
-    { time: "13:00", status: "Geçmiş" },
-    { time: "14:00", status: "Geçmiş" },
-    { time: "15:00", status: "Dolu" },
-    { time: "16:00", status: "Dolu" },
-    { time: "17:00", status: "Boş" },
-    { time: "18:00", status: "Boş" },
-    { time: "19:00", status: "Boş" },
-    { time: "20:00", status: "Boş" },
-    { time: "21:00", status: "Boş" },
-    { time: "22:00", status: "Boş" },
-    { time: "23:00", status: "Boş" },
-    { time: "24:00", status: "Boş" },
-  ];
-
-  const matches = [
-    { time: "13:00", teams: "Galatasaray - Fenerbahçe", saha: "1" },
-    { time: "14:00", teams: "Galatasaray - Fenerbahçe", saha: "1" },
-    { time: "15:00", teams: "Galatasaray - Fenerbahçe", saha: "1" },
-    { time: "16:00", teams: "Beşiktaş - Trabzonspor", saha: "2" },
-    { time: "17:00", teams: "Adana Demir - Başakşehir", saha: "3" },
-    { time: "18:00", teams: "Konyaspor - Antalyaspor", saha: "1" },
-    { time: "19:00", teams: "Gaziantep - Sivasspor", saha: "2" },
-    { time: "20:00", teams: "Kayserispor - Alanyaspor", saha: "3" },
-    { time: "21:00", teams: "Hatayspor - Giresunspor", saha: "1" },
-  ];
-
   return (
-    <Container
-      style={{ marginTop: "20px" }}
-    >
-      <Row>
-        <Col md={4}>
-          {/* Sol Kısım */}
+    <Container className="py-4">
+      <Row className="mb-4">
+        <Col md={12}>
+          <Card className="border-0 shadow-sm">
+            <Card.Body className="p-0">
+              <Nav className="justify-content-center" variant="tabs">
+                {fields.map((f) => (
+                  <Nav.Item key={f.id}>
+                    <Nav.Link 
+                      active={selectedField?.id === f.id}
+                      onClick={() => setField(f)}
+                      className="text-center"
+                    >
+                      {f.name}
+                    </Nav.Link>
+                  </Nav.Item>
+                ))}
+              </Nav>
 
-          <Card
-            border="primary"
-            style={{ backgroundColor: "#f5f5f5" }}
-            className="p-3 rounded"
-          >
-            {/* Tarih Seçme Butonu */}
-            <div className="d-flex justify-content-center mb-3">
-              <Button
-                variant="light"
-                className="rounded-pill px-3 me-2"
-                onClick={handlePreviousDate}
-              >
-                {"<"}
-              </Button>
-              <span className="fw-bold" style={{ fontSize: 18 }}>
-                {formatDate(selectedDate)}
-              </span>
-              <Button
-                variant="light"
-                className="rounded-pill px-3 ms-2"
-                onClick={handleNextDate}
-              >
-                {">"}
-              </Button>
-            </div>
+              <div className="p-4">
+                <h5 className="text-center mb-4">
+                  Seçili Saha: {selectedField?.name ?? "—"}
+                </h5>
 
-            {/* Scrollable Maç Listesi */}
-            <div
-              style={{ maxHeight: "600px", overflowY: "auto", fontSize: 18 }}
-            >
-              {matches.map((match, index) => (
-                <Card key={index} className="mb-2 p-2">
-                  <b>{match.time}</b>{" "}
-                  <span>
-                    {match.teams} --- Saha: {field.name}
-                  </span>
-                </Card>
-              ))}
-            </div>
-          </Card>
-        </Col>
-        <Col md={8}>
-          {/* Sağ Kısım */}
-          <Card
-            border="primary"
-            style={{
-              height: "685px",
-              backgroundColor: "#f5f5f5",
-            }}
-            className="p-4 rounded"
-          >
-            <Nav
-              className="justify-content-center"
-              style={{ fontSize: 15 }}
-              variant="tabs"
-              defaultActiveKey={selectedField}
-            >
-              {field.map((field) => (
-                <Nav.Item key={field.id}>
-                  <Nav.Link
-                    eventKey={field.name}
-                    onClick={() => setSelectedField(field.name)}
-                    className="text-center"
+                <div className="d-flex justify-content-center align-items-center mb-4">
+                  <Button 
+                    variant="outline-primary" 
+                    className="rounded-circle me-3"
+                    onClick={() => changeDay(-1)}
                   >
-                    {field.name}
-                  </Nav.Link>
-                </Nav.Item>
-              ))}
-            </Nav>
-            <h4 className="text-center mt-3">Seçili Saha: {selectedField}</h4>
-            <div className="d-flex justify-content-center my-2">
-              <Button
-                variant="light"
-                className="rounded-pill px-3 me-2"
-                onClick={handlePreviousDate}
-              >
-                {"<"}
-              </Button>
-              <span className="fw-bold" style={{ fontSize: 18 }}>
-                {formatDate(selectedDate)}
-              </span>
-              <Button
-                variant="light"
-                className="rounded-pill px-3 ms-2"
-                onClick={handleNextDate}
-              >
-                {">"}
-              </Button>
-            </div>
-            
-            <div
-              style={{ maxHeight: "600px", overflowY: "auto", overflowX: "hidden", fontSize: 18 }}
-            >
-            <Row>
-              {timeSlots.map((slot) => (
-                <Col xs={4} key={slot.time} className="mb-2 text-center">
-                  <Card
-                    className={`p-2 ${
-                      slot.status === "Dolu"
-                        ? "bg-danger text-white"
-                        : slot.status === "Geçmiş"
-                        ? "bg-warning"
-                        : "bg-light"
-                    }`}
-                    style={{ fontSize: "18px" }}
+                    <FaChevronLeft />
+                  </Button>
+                  <h4 className="mb-0 text-center" style={{ minWidth: '300px' }}>
+                    {formatDate(selectedDate)}
+                  </h4>
+                  <Button 
+                    variant="outline-primary" 
+                    className="rounded-circle ms-3"
+                    onClick={() => changeDay(1)}
                   >
-                    <b>{slot.time}</b>
-                    <br />
-                    <span style={{ fontSize: "18px" }}>{slot.status}</span>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-            </div>
+                    <FaChevronRight />
+                  </Button>
+                </div>
+
+                <div className="time-slots-container">
+                  <Row className="g-3">
+                    {slotsForDay.map(({ time, status }) => (
+                      <Col xs={6} md={4} lg={3} key={time}>
+                        <Button
+                          variant={getStatusVariant(status)}
+                          className="w-100 py-2 time-slot-button"
+                          disabled={status !== "Boş"}
+                        >
+                          <div className="d-flex flex-column">
+                            <span className="fw-bold">{time}</span>
+                            <small>{status}</small>
+                          </div>
+                        </Button>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              </div>
+            </Card.Body>
           </Card>
         </Col>
       </Row>
+
+      <style jsx>{`
+        .time-slots-container {
+          max-height: 500px;
+          overflow-y: auto;
+          padding: 5px;
+        }
+        .time-slot-button {
+          height: 70px;
+          transition: all 0.2s ease;
+        }
+        .time-slot-button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+      `}</style>
     </Container>
   );
 }
-
-export default HomePage;

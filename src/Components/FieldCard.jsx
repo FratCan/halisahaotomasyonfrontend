@@ -1,14 +1,14 @@
 // Components/FieldCard.js
 import React from "react";
 import { Card, Button, Row, Col, Badge } from "react-bootstrap";
-import { 
-  FaEdit, 
-  FaLightbulb, 
-  FaVideo, 
-  FaCalendarAlt, 
+import {
+  FaEdit,
+  FaLightbulb,
+  FaVideo,
+  FaCalendarAlt,
   FaCalendarTimes,
   FaClipboardList,
-  FaChair 
+  FaChair,
 } from "react-icons/fa";
 import { IoMdFootball } from "react-icons/io";
 import { GiSoccerField } from "react-icons/gi";
@@ -33,9 +33,11 @@ function FieldCard({ field, onEdit, showEditButton }) {
         width: "100%",
         opacity: isAvailable ? 1 : 0.85,
         transition: "all 0.3s ease",
-        border: isAvailable ? "1px solid rgba(0, 123, 255, 0.3)" : "1px solid rgba(220, 53, 69, 0.3)",
+        border: isAvailable
+          ? "1px solid rgba(0, 123, 255, 0.3)"
+          : "1px solid rgba(220, 53, 69, 0.3)",
         borderRadius: "12px",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       <Card.Header
@@ -44,14 +46,14 @@ function FieldCard({ field, onEdit, showEditButton }) {
           fontSize: "1.25rem",
           color: "white",
           backgroundColor: isAvailable ? "#0d6efd" : "#dc3545",
-          borderBottom: "none"
+          borderBottom: "none",
         }}
       >
         <div className="d-flex justify-content-between align-items-center">
           <span>{field.name}</span>
           {showEditButton && (
-            <Button 
-              variant="light" 
+            <Button
+              variant="light"
               onClick={onEdit}
               size="sm"
               style={{ borderRadius: "20px" }}
@@ -73,24 +75,26 @@ function FieldCard({ field, onEdit, showEditButton }) {
                 : "https://via.placeholder.com/800x400?text=Saha+Görseli+Yok"
             }
             alt={field.name}
-            style={{ 
-              height: "220px", 
-              width: "100%", 
+            style={{
+              height: "220px",
+              width: "100%",
               objectFit: "cover",
-              filter: isAvailable ? "none" : "grayscale(50%)"
+              filter: isAvailable ? "none" : "grayscale(50%)",
             }}
           />
           {!isAvailable && (
-            <div style={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              backgroundColor: "rgba(220, 53, 69, 0.9)",
-              color: "white",
-              padding: "5px 10px",
-              borderRadius: "20px",
-              fontWeight: "bold"
-            }}>
+            <div
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                backgroundColor: "rgba(220, 53, 69, 0.9)",
+                color: "white",
+                padding: "5px 10px",
+                borderRadius: "20px",
+                fontWeight: "bold",
+              }}
+            >
               KAPALI
             </div>
           )}
@@ -103,14 +107,21 @@ function FieldCard({ field, onEdit, showEditButton }) {
             <Col md={6}>
               <div className="d-flex align-items-center mb-2">
                 <GiSoccerField className="me-2" size={20} />
-                <span><strong>{field.width}m × {field.height}m</strong> (Boyut)</span>
+                <span>
+                  <strong>
+                    {field.width}m × {field.height}m
+                  </strong>{" "}
+                  (Boyut)
+                </span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
                 <IoMdFootball className="me-2" size={20} />
-                <span><strong>{field.floorType}</strong> (Zemin)</span>
+                <span>
+                  <strong>{field.floorType}</strong> (Zemin)
+                </span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
                 {field.isIndoor ? (
                   <span className="badge bg-info me-2">🏠</span>
@@ -119,10 +130,12 @@ function FieldCard({ field, onEdit, showEditButton }) {
                 )}
                 <span>{field.isIndoor ? "Kapalı Saha" : "Açık Saha"}</span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
                 <span className="badge bg-secondary me-2">👥</span>
-                <span><strong>{field.capacity}</strong> kişi kapasite</span>
+                <span>
+                  <strong>{field.capacity}</strong> kişi kapasite
+                </span>
               </div>
 
               {/* Yeni eklenen: Skorboard */}
@@ -132,7 +145,10 @@ function FieldCard({ field, onEdit, showEditButton }) {
                 ) : (
                   <FaClipboardList className="text-secondary me-2" size={20} />
                 )}
-                <span>Skorboard: <strong>{field.hasScoreBoard ? "Var" : "Yok"}</strong></span>
+                <span>
+                  Skorboard:{" "}
+                  <strong>{field.hasScoreBoard ? "Var" : "Yok"}</strong>
+                </span>
               </div>
             </Col>
 
@@ -144,16 +160,21 @@ function FieldCard({ field, onEdit, showEditButton }) {
                 ) : (
                   <FaLightbulb className="text-secondary me-2" size={20} />
                 )}
-                <span>Aydınlatma: <strong>{field.lightingAvailable ? "Var" : "Yok"}</strong></span>
+                <span>
+                  Aydınlatma:{" "}
+                  <strong>{field.lightingAvailable ? "Var" : "Yok"}</strong>
+                </span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
                 {field.hasCamera ? (
                   <FaVideo className="text-primary me-2" size={20} />
                 ) : (
                   <FaVideo className="text-secondary me-2" size={20} />
                 )}
-                <span>Kamera: <strong>{field.hasCamera ? "Var" : "Yok"}</strong></span>
+                <span>
+                  Kamera: <strong>{field.hasCamera ? "Var" : "Yok"}</strong>
+                </span>
               </div>
 
               {/* Yeni eklenen: Tribün */}
@@ -163,30 +184,39 @@ function FieldCard({ field, onEdit, showEditButton }) {
                 ) : (
                   <FaChair className="text-secondary me-2" size={20} />
                 )}
-                <span>Tribün: <strong>{field.hasTribune ? "Var" : "Yok"}</strong></span>
+                <span>
+                  Tribün: <strong>{field.hasTribune ? "Var" : "Yok"}</strong>
+                </span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
                 <span className="badge bg-dark me-2">💰</span>
-                <span><strong>{field.pricePerHour}₺</strong> / saat</span>
+                <span>
+                  <strong>{field.pricePerHour}₺</strong> / saat
+                </span>
               </div>
-              
+
               <div className="d-flex align-items-center mb-2">
-                <span 
-                  className={`badge me-2 ${isAvailable ? "bg-success" : "bg-danger"}`}
+                <span
+                  className={`badge me-2 ${
+                    isAvailable ? "bg-success" : "bg-danger"
+                  }`}
                 >
                   {isAvailable ? "✔" : "✖"}
                 </span>
-                <span>Durum: <strong>{field.isAvailable ? "Açık" : "Kapalı"}</strong></span>
+                <span>
+                  Durum:{" "}
+                  <strong>{field.isAvailable ? "Açık" : "Kapalı"}</strong>
+                </span>
               </div>
             </Col>
           </Row>
 
           {/* ÇALIŞMA SAATLERİ VE KAPALI GÜNLER */}
-          {(field.weeklyOpenings?.length > 0 || field.exceptions?.length > 0) && (
+          {(field.weeklyOpenings?.length > 0 ||
+            field.exceptions?.length > 0) && (
             <div className="mt-4">
               <Row className="g-3">
-                {/* Haftalık Saatler */}
                 {field.weeklyOpenings?.length > 0 && (
                   <Col md={6}>
                     <div className="p-3 bg-light rounded">
@@ -196,16 +226,18 @@ function FieldCard({ field, onEdit, showEditButton }) {
                       </h6>
                       <div className="d-flex flex-wrap gap-2">
                         {field.weeklyOpenings.map((w, idx) => {
-                          const dayName = WEEK_DAYS[w.dayOfWeek] ?? `${w.dayOfWeek}`;
+                          const dayName =
+                            WEEK_DAYS[w.dayOfWeek] ?? `${w.dayOfWeek}`;
                           return (
-                            <Badge 
+                            <Badge
                               key={idx}
-                              bg="light" 
+                              bg="light"
                               text="dark"
                               className="border border-primary"
                               style={{ borderRadius: "8px" }}
                             >
-                              {dayName}: {w.startTime?.slice(0, 5)}-{w.endTime?.slice(0, 5)}
+                              {dayName}: {w.startTime?.slice(0, 5)}-
+                              {w.endTime?.slice(0, 5)}
                             </Badge>
                           );
                         })}
@@ -224,9 +256,9 @@ function FieldCard({ field, onEdit, showEditButton }) {
                       </h6>
                       <div className="d-flex flex-wrap gap-2">
                         {field.exceptions.map((ex, idx) => (
-                          <Badge 
+                          <Badge
                             key={idx}
-                            bg="light" 
+                            bg="light"
                             text="dark"
                             className="border border-danger"
                             style={{ borderRadius: "8px" }}
