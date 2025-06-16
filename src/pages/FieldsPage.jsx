@@ -74,11 +74,29 @@ function FieldsPage({ facilityId, setFacilityId }) {
   };
 
   // localStorage'dan id'yi al
-  useEffect(() => {
-    const idFromStorage = localStorage.getItem("selectedFacilityId");
-    console.log("Local'dan gelen id:", idFromStorage);
-    if (idFromStorage) setFacilityId(idFromStorage);
-  }, []);
+useEffect(() => {
+  const storedFacilityId = localStorage.getItem("selectedFacilityId");
+
+  if (storedFacilityId) {
+    const fetchAndCheckFacility = async () => {
+      const facilities = await getFacilities(ownerId);
+      setFacilities(facilities);
+
+      const isOwned = facilities.some(f => f.id === Number(storedFacilityId));
+
+      if (!isOwned) {
+        console.log("Başka kullanıcıya ait tesis, sıfırlanıyor...");
+        localStorage.removeItem("selectedFacilityId");
+        setFacilityId(""); // veya null
+      } else {
+        setFacilityId(storedFacilityId);
+      }
+    };
+
+    fetchAndCheckFacility();
+  }
+}, [ownerId]);
+
 
   // id geldikten sonra verileri çek
   useEffect(() => {
