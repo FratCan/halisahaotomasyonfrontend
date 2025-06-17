@@ -33,6 +33,13 @@ function FacilitiesPage() {
     city: "",
     town: "",
   });
+  const [cityInput, setCityInput] = useState("");
+  const [townInput, setTownInput] = useState("");
+  useEffect(() => {
+    if (selectedLocation.city) setCityInput(selectedLocation.city);
+    if (selectedLocation.town) setTownInput(selectedLocation.town);
+  }, [selectedLocation.city, selectedLocation.town]);
+
   // Tıklandığında modalı aç
   const handleViewFields = (facility) => {
     setFieldsFacility(facility); // hem adı hem fields dizisi geliyor
@@ -105,7 +112,7 @@ function FacilitiesPage() {
       ownerId, // localStorage'dan gelen ownerId'yi burada kullan!
       name: elems.name.value,
       email: elems.email.value,
-      location: elems.location.value,
+      //location: elems.location.value,
       addressDetails: elems.addressDetails.value,
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
@@ -172,12 +179,12 @@ function FacilitiesPage() {
     const updatedData = {
       name: elems.name.value,
       email: elems.email.value,
-      location: elems.location.value,
+      //location: elems.location.value,
       addressDetails: elems.addressDetails.value,
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
-      city: elems.city.value,
-      town: elems.town.value,
+      city: cityInput,
+      town: townInput,
       description: elems.description.value,
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
@@ -347,8 +354,7 @@ function FacilitiesPage() {
                       required
                     />
                   </Form.Group>
-
-                  <Form.Group controlId="location" className="mb-3">
+                  {/*    <Form.Group controlId="location" className="mb-3">
                     <Form.Label>Konum</Form.Label>
                     <Form.Control
                       name="location"
@@ -357,6 +363,7 @@ function FacilitiesPage() {
                       required
                     />
                   </Form.Group>
+*/}
 
                   <Form.Group controlId="addressDetails" className="mb-3">
                     <Form.Label>Adres Detay</Form.Label>
@@ -364,6 +371,14 @@ function FacilitiesPage() {
                       name="addressDetails"
                       type="text"
                       defaultValue={selectedFacility?.addressDetails || ""}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="description" className="mb-3">
+                    <Form.Label>Açıklama</Form.Label>
+                    <Form.Control
+                      name="description"
+                      type="text"
+                      defaultValue={selectedFacility?.description || ""}
                     />
                   </Form.Group>
                 </Col>
@@ -397,7 +412,8 @@ function FacilitiesPage() {
                     <Form.Control
                       name="city"
                       type="text"
-                      defaultValue={selectedFacility?.city || ""}
+                      value={cityInput}
+                      onChange={(e) => setCityInput(e.target.value)}
                       required
                     />
                   </Form.Group>
@@ -407,17 +423,9 @@ function FacilitiesPage() {
                     <Form.Control
                       name="town"
                       type="text"
-                      defaultValue={selectedFacility?.town || ""}
+                      value={townInput}
+                      onChange={(e) => setTownInput(e.target.value)}
                       required
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="description" className="mb-3">
-                    <Form.Label>Açıklama</Form.Label>
-                    <Form.Control
-                      name="description"
-                      type="text"
-                      defaultValue={selectedFacility?.description || ""}
                     />
                   </Form.Group>
 

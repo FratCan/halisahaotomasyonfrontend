@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Container, Row, Col, Card, Button, Nav, Badge } from "react-bootstrap";
-import { 
-  FaCalendarAlt, 
-  FaChevronLeft, 
+import {
+  FaCalendarAlt,
+  FaChevronLeft,
   FaChevronRight,
-  FaFutbol
+  FaFutbol,
 } from "react-icons/fa";
 import { getFieldsOwner } from "../api/FieldsApi";
 import { getReservations } from "../api/ReservationApi";
@@ -13,16 +13,19 @@ const START_HOUR = 7;
 const END_HOUR = 23;
 
 const WEEK_DAYS = [
-  "Sunday", "Monday", "Tuesday",
-  "Wednesday", "Thursday", "Friday", "Saturday",
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
 ];
 
 const toWeekIndex = (dow) =>
   typeof dow === "number"
     ? dow
-    : WEEK_DAYS.findIndex(
-        (d) => d.toLowerCase() === String(dow).toLowerCase()
-      );
+    : WEEK_DAYS.findIndex((d) => d.toLowerCase() === String(dow).toLowerCase());
 
 export default function HomePage() {
   const ownerId = Number(localStorage.getItem("userId"));
@@ -74,7 +77,11 @@ export default function HomePage() {
           .filter((w) => toWeekIndex(w.dayOfWeek) === weekDay)
           .forEach((w) => {
             const s = Number((w.startTime || "00:00").slice(0, 2));
-            const e = Number((w.endTime || "24:00").slice(0, 2));
+            let e = Number((w.endTime || "24:00").slice(0, 2));
+
+            // ÖZEL DURUM: Gece 00:00 kapanışsa aslında gece 24:00 gibi say
+            if (e === 0) e = 24;
+
             for (let h = s; h < e; h++) openHours.add(h);
           });
       }
@@ -94,9 +101,13 @@ export default function HomePage() {
       const label = `${String(h).padStart(2, "0")}:00`;
       let status;
 
-      if (isClosedByException || (!openHours.has(h))) status = "Kapalı";
+      if (isClosedByException || !openHours.has(h)) status = "Kapalı";
       else if (reserved.has(h)) status = "Rezerve";
-      else if ((today && h < now.getHours()) || (!today && selectedDate < now)) status = "Geçmiş";
+      else if (
+        today &&
+        (h < now.getHours() || (h === now.getHours() && now.getMinutes() > 0))
+      )
+        status = "Geçmiş";
       else status = "Boş";
 
       slots.push({ time: label, status });
@@ -105,7 +116,11 @@ export default function HomePage() {
   }, [selectedField, reservations, selectedDate]);
 
   const formatDate = (d) =>
-    d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" });
+    d.toLocaleDateString("tr-TR", {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+    });
 
   const changeDay = (delta) =>
     setDate((prev) => {
@@ -115,12 +130,17 @@ export default function HomePage() {
     });
 
   const getStatusVariant = (status) => {
-    switch(status) {
-      case "Boş": return "outline-success";
-      case "Rezerve": return "outline-danger";
-      case "Geçmiş": return "outline-warning";
-      case "Kapalı": return "outline-secondary";
-      default: return "outline-primary";
+    switch (status) {
+      case "Boş":
+        return "outline-success";
+      case "Rezerve":
+        return "outline-danger";
+      case "Geçmiş":
+        return "outline-warning";
+      case "Kapalı":
+        return "outline-secondary";
+      default:
+        return "outline-primary";
     }
   };
 
@@ -133,7 +153,7 @@ export default function HomePage() {
               <Nav className="justify-content-center" variant="tabs">
                 {fields.map((f) => (
                   <Nav.Item key={f.id}>
-                    <Nav.Link 
+                    <Nav.Link
                       active={selectedField?.id === f.id}
                       onClick={() => setField(f)}
                       className="text-center"
@@ -150,22 +170,49 @@ export default function HomePage() {
                 </h5>
 
                 <div className="d-flex justify-content-center align-items-center mb-4">
-                  <Button 
-                    variant="outline-primary" 
-                    className="rounded-circle me-3"
+                  <Button
+                    variant="light"
+                    className="rounded-circle me-3 shadow-sm border border-primary d-flex align-items-center justify-content-center"
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      transition: "all 0.2s",
+                    }}
                     onClick={() => changeDay(-1)}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#e8f0fe")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.backgroundColor = "white")
+                    }
                   >
-                    <FaChevronLeft />
+                    <FaChevronLeft size={18} color="#0d6efd" />
                   </Button>
-                  <h4 className="mb-0 text-center" style={{ minWidth: '300px' }}>
+
+                  <h4
+                    className="mb-0 text-center"
+                    style={{ minWidth: "300px" }}
+                  >
                     {formatDate(selectedDate)}
                   </h4>
-                  <Button 
-                    variant="outline-primary" 
-                    className="rounded-circle ms-3"
+
+                  <Button
+                    variant="light"
+                    className="rounded-circle ms-3 shadow-sm border border-primary d-flex align-items-center justify-content-center"
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      transition: "all 0.2s",
+                    }}
                     onClick={() => changeDay(1)}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#e8f0fe")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.backgroundColor = "white")
+                    }
                   >
-                    <FaChevronRight />
+                    <FaChevronRight size={18} color="#0d6efd" />
                   </Button>
                 </div>
 
@@ -200,12 +247,12 @@ export default function HomePage() {
           padding: 5px;
         }
         .time-slot-button {
-          height: 70px;
+          height: 90px;
           transition: all 0.2s ease;
         }
         .time-slot-button:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
       `}</style>
     </Container>

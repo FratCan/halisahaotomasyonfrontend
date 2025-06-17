@@ -254,7 +254,8 @@ export default function ReservationPage() {
           />
         </Col>
 
-        <ReservationFilter />
+        <ReservationFilter fields={fields} />
+
       </Row>
 
       {/* Rezervasyon Bilgi Modalı */}

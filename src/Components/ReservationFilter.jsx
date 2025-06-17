@@ -1,12 +1,10 @@
 import { Card, Col, Button, Dropdown, ButtonGroup, ListGroup } from "react-bootstrap";
-import { useFieldContext } from "../Components/FieldContext";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState } from "react";
 import DatePicker from "react-datepicker";
 import { format, parseISO, isSameWeek, isSameMonth } from "date-fns";
 
-function ReservationFilter() {
-    const { fields } = useFieldContext();
+function ReservationFilter({fields}) {
     const [filterType, setFilterType] = useState("all");
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedField, setSelectedField] = useState(null);
