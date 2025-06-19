@@ -9,7 +9,7 @@ import {
 import { getFieldsOwner } from "../api/FieldsApi";
 import { getReservations } from "../api/ReservationApi";
 
-const START_HOUR = 7;
+const START_HOUR = 8;
 const END_HOUR = 23;
 
 const WEEK_DAYS = [
@@ -97,21 +97,39 @@ export default function HomePage() {
     const today = now.toISOString().slice(0, 10) === isoDate;
     const slots = [];
 
-    for (let h = START_HOUR; h <= END_HOUR; h++) {
-      const label = `${String(h).padStart(2, "0")}:00`;
-      let status;
+const isBeforeToday = (() => {
+  const onlyDate = (d) => {
+    const newDate = new Date(d);
+    newDate.setHours(0, 0, 0, 0);
+    return newDate;
+  };
+  return onlyDate(selectedDate) < onlyDate(new Date());
+})();
 
-      if (isClosedByException || !openHours.has(h)) status = "Kapalı";
-      else if (reserved.has(h)) status = "Rezerve";
-      else if (
-        today &&
-        (h < now.getHours() || (h === now.getHours() && now.getMinutes() > 0))
-      )
-        status = "Geçmiş";
-      else status = "Boş";
+for (let h = START_HOUR; h <= END_HOUR; h++) {
+  const label = `${String(h).padStart(2, "0")}:00`;
+  let status;
 
-      slots.push({ time: label, status });
-    }
+  const isReserved = reserved.has(h);
+
+  if (isClosedByException || !openHours.has(h)) {
+    status = "Kapalı";
+  } else if (isReserved) {
+    status = "Rezerve";
+  } else if (isBeforeToday) {
+    status = "Geçmiş"; // 🔥 sadece rezerve değilse geçmiş yap
+  } else if (
+    today &&
+    (h < now.getHours() || (h === now.getHours() && now.getMinutes() > 0))
+  ) {
+    status = "Geçmiş";
+  } else {
+    status = "Boş";
+  }
+
+  slots.push({ time: label, status });
+}
+
     return slots;
   }, [selectedField, reservations, selectedDate]);
 
@@ -216,7 +234,7 @@ export default function HomePage() {
                   </Button>
                 </div>
 
-                <div className="time-slots-container">
+                <div className="time-slots-container" style={{ overflow: "hidden" }}>
                   <Row className="g-3">
                     {slotsForDay.map(({ time, status }) => (
                       <Col xs={6} md={4} lg={3} key={time}>

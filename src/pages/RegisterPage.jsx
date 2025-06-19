@@ -125,7 +125,7 @@ export default function RegisterPage() {
             <div className="logo-icon">
               <User size={48} />
             </div>
-            <h1>Halısaha Rezervasyon</h1>
+            <h1>Halısaha Rezervasyon Takip Uygulaması</h1>
             <p className="lead">Spor yapmanın en kolay yolu</p>
             <div className="features">
               <div className="feature-item">

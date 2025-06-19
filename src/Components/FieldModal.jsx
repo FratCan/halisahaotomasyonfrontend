@@ -16,7 +16,7 @@ function FieldModal({ show, handleClose, field, onSave }) {
     capacity: 0,
     hasCamera: false,
     floorType: "",
-    openingDays: []
+    openingDays: [],
   });
 
   // Field prop değiştiğinde form verilerini güncelle
@@ -35,25 +35,25 @@ function FieldModal({ show, handleClose, field, onSave }) {
         capacity: field.capacity || 0,
         hasCamera: field.hasCamera || false,
         floorType: field.floorType || "",
-        openingDays: field.openingDays || []
+        openingDays: field.openingDays || [],
       });
     }
   }, [field]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleDaysChange = (day) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newDays = prev.openingDays.includes(day)
-        ? prev.openingDays.filter(d => d !== day)
+        ? prev.openingDays.filter((d) => d !== day)
         : [...prev.openingDays, day];
-      
+
       return { ...prev, openingDays: newDays };
     });
   };
@@ -64,7 +64,7 @@ function FieldModal({ show, handleClose, field, onSave }) {
     const updatedField = {
       ...formData,
       startTime: `${formData.startTime}:00`,
-      endTime: `${formData.endTime}:00`
+      endTime: `${formData.endTime}:00`,
     };
     onSave(updatedField);
     handleClose();
@@ -76,6 +76,23 @@ function FieldModal({ show, handleClose, field, onSave }) {
         <Modal.Title>Saha Düzenle: {field?.name}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+ <div className="text-center mb-4">
+  <img
+    src={
+      field?.photoUrls?.[0]
+        ? `https://halisaha.up.railway.app/${field.photoUrls[0]}`
+        : "https://via.placeholder.com/800x400?text=Saha+Görseli+Yok"
+    }
+    alt={field?.name || "Saha Görseli"}
+    style={{
+      height: "220px",
+      width: "100%",
+      objectFit: "cover",
+      borderRadius: "8px",
+    }}
+  />
+</div>
+
         <Form onSubmit={handleSubmit}>
           {/* Temel Bilgiler */}
           <Row className="mb-3">
@@ -223,10 +240,10 @@ function FieldModal({ show, handleClose, field, onSave }) {
                 <Form.Select
                   name="isIndoor"
                   value={formData.isIndoor ? "true" : "false"}
-                  onChange={(e) => 
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      isIndoor: e.target.value === "true" 
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isIndoor: e.target.value === "true",
                     }))
                   }
                   required
@@ -254,7 +271,15 @@ function FieldModal({ show, handleClose, field, onSave }) {
           <Form.Group className="mb-3">
             <Form.Label>Açık Olduğu Günler</Form.Label>
             <div>
-              {["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"].map(day => (
+              {[
+                "Pazartesi",
+                "Salı",
+                "Çarşamba",
+                "Perşembe",
+                "Cuma",
+                "Cumartesi",
+                "Pazar",
+              ].map((day) => (
                 <Form.Check
                   inline
                   key={day}

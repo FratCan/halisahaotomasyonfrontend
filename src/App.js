@@ -1,7 +1,7 @@
 import NavBar from './Components/NavBar';
-//import { BrowserRouter as Router, Routes, Route,useLocation } from "react-router-dom";
-import { HashRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-
+import { BrowserRouter as Router, Routes, Route,useLocation } from "react-router-dom";
+//import { HashRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import NotFoundPage from "./pages/NotFoundPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import HomePage from "./pages/HomePage";
 import ReservationPage from "./pages/ReservationPage";
@@ -10,12 +10,10 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import FieldsPage from "./pages/FieldsPage";
 import ProtectedRoute from "./Components/ProtectedRoute";
-import AnnouncementPage from './pages/AnnouncementPage';
 import { AuthProvider } from "./Context/AuthContext";
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import PersonPage from './pages/PersonPage';
 import { useState } from "react";
-// App.js veya index.js
 import "leaflet/dist/leaflet.css";
 
 
@@ -31,11 +29,11 @@ function Appcontent() {
     <>
       {shouldShowNav && <NavBar />}
       <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<LoginPage/>}></Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/personal-info" element={<PersonPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />}></Route>
+          <Route path="/personal-info" element={<ProtectedRoute><PersonPage /></ProtectedRoute> } />
+          <Route path="/reset-password" element={<ProtectedRoute><ResetPasswordPage /></ProtectedRoute> }></Route>
           <Route path="/forgot-password" element={<ForgotPasswordPage/>} />
           <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/facility" element={<ProtectedRoute><FacilitiesPage /></ProtectedRoute>} />
@@ -45,7 +43,8 @@ function Appcontent() {
               </ProtectedRoute>}
           />
           <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
-          {/*<Route path="/announcement" element={<ProtectedRoute><AnnouncementPage/></ProtectedRoute>}/>*/}
+          <Route path="*" element={<NotFoundPage />} />
+
       </Routes>
     </>
   );

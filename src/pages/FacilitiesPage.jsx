@@ -48,6 +48,8 @@ function FacilitiesPage() {
 
   // OwnerId'yi localStorage'dan al
   const ownerId = Number(localStorage.getItem("userId"));
+  const token = Number(localStorage.getItem("token"));
+  console.log("token:", token);
 
   useEffect(() => {
     if (ownerId) {
@@ -65,6 +67,17 @@ function FacilitiesPage() {
       console.error("Facility çekilemedi:", err);
     }
   };
+  useEffect(() => {
+    if (selectedFacility) {
+      setCityInput(selectedFacility.city || "");
+      setTownInput(selectedFacility.town || "");
+      setSelectedLocation((prev) => ({
+        ...prev,
+        city: selectedFacility.city || "",
+        town: selectedFacility.town || "",
+      }));
+    }
+  }, [selectedFacility]);
 
   const handleEditClick = (id) => {
     const fresh = facilities.find((f) => f.id === id);
@@ -106,18 +119,19 @@ function FacilitiesPage() {
       alert("Lütfen tüm zorunlu alanları doldurun.");
       return;
     }
+
     const elems = e.target.elements;
 
     const facilityData = {
-      ownerId, // localStorage'dan gelen ownerId'yi burada kullan!
+      ownerId,
       name: elems.name.value,
       email: elems.email.value,
-      //location: elems.location.value,
       addressDetails: elems.addressDetails.value,
       phone: elems.phone.value,
       bankAccountInfo: elems.bankAccountInfo.value,
       latitude: selectedLocation.lat,
       longitude: selectedLocation.lng,
+      logoFile:"",
       city: elems.city.value,
       town: elems.town.value,
       description: elems.description.value,
@@ -129,44 +143,29 @@ function FacilitiesPage() {
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
       hasToilet: elems.hasToilet.checked,
-      hasTransportService: elems.hasTransportService,
-      hasParking: elems.hasParking,
+      hasTransportService: elems.hasTransportService.checked,
+      hasParking: elems.hasParking.checked,
       equipments: [],
     };
 
-    console.log("🔄 Adding facility", facilityData);
-
     try {
-      // 1. Önce yeni tesisi oluştur
       const newFacility = await createFacility(facilityData);
 
-      // 🌟 facilityId'yi localStorage'a kaydet
       localStorage.setItem("selectedFacilityId", newFacility.id);
-      console.log(
-        "📦 selectedFacilityId localStorage'a kaydedildi:",
-        newFacility.id
-      );
-      // 2. Eğer fotoğraf seçildiyse fotoğrafı ayrıca yükle
+      console.log("📦 selectedFacilityId localStorage'a kaydedildi:", newFacility.id);
+
       if (photoFile) {
         const formData = new FormData();
-        formData.append("photo", photoFile);
-
+        formData.append("PhotoFiles", photoFile);
         await uploadFacilityPhotos(newFacility.id, formData);
         console.log("✅ Fotoğraf yüklendi.");
       }
 
-      // 3. Güncel listeyi çek
-      // 3. Güncel listeyi çek
-      setFacilities((prev) => [...prev, newFacility]); // hızlı görsel ekleme
-      await fetchFacilities(ownerId); // arka planda tam güncelleme
-
-      // 4. Modalı kapat
+      setFacilities((prev) => [...prev, newFacility]);
+      await fetchFacilities(ownerId);
       handleCloseModal();
     } catch (err) {
-      console.error(
-        "❌ Tesis ekleme başarısız:",
-        err.response?.data || err.message
-      );
+      console.error("❌ Tesis ekleme başarısız:", err.response?.data || err.message);
     }
   };
 
@@ -177,6 +176,7 @@ function FacilitiesPage() {
     const elems = e.target.elements;
 
     const updatedData = {
+      ownerId,
       name: elems.name.value,
       email: elems.email.value,
       //location: elems.location.value,
@@ -185,6 +185,8 @@ function FacilitiesPage() {
       bankAccountInfo: elems.bankAccountInfo.value,
       city: cityInput,
       town: townInput,
+      latitude: selectedLocation.lat,
+      longitude: selectedLocation.lng,
       description: elems.description.value,
       hasCafeteria: elems.hasCafeteria.checked,
       hasShower: elems.hasShower.checked,
@@ -196,9 +198,8 @@ function FacilitiesPage() {
       hasToilet: elems.hasToilet.checked,
       hasTransportService: elems.hasTransportService.checked,
       hasParking: elems.hasParking.checked,
-      fields: [],
-      equipments: [],
-      photoUrls: selectedFacility.photoUrls || [],
+       logoFile: photoFile, // bu alanı da ver
+      rating : 0.0
     };
 
     console.log("🔄 Updating facility", selectedFacility.id, updatedData);
@@ -207,7 +208,7 @@ function FacilitiesPage() {
       // Fotoğraf varsa yükle
       if (photoFile) {
         const photoFormData = new FormData();
-        photoFormData.append("photo", photoFile);
+        photoFormData.append("PhotoFiles", photoFile);
         await uploadFacilityPhotos(selectedFacility.id, photoFormData);
         console.log("✅ Fotoğraf yüklendi.");
       }

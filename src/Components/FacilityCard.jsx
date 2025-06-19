@@ -384,7 +384,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                       {facility.hasShower ? "Evet" : "Hayır"}
                     </span>
                   </div>
-                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Tuvalet:</strong>
                     <span
                       style={{ color: facility.hasToilet ? "green" : "red" }}
@@ -392,7 +392,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                       {facility.hasToilet ? "Evet" : "Hayır"}
                     </span>
                   </div>
-                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Ulaşım:</strong>
                     <span
                       style={{
@@ -403,7 +403,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Park:</strong>
                     <span
                       style={{ color: facility.hasParking ? "green" : "red" }}
@@ -413,7 +413,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                   </div>
                 </Col>
                 <Col>
-                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>İlk Yardım Kiti:</strong>
                     <span
                       style={{ color: facility.hasFirstAid ? "green" : "red" }}
@@ -422,10 +422,8 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex" ,marginBottom: "8px"}}>
-                    <strong style={{ width: "140px" }}>
-                      Kamera:
-                    </strong>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
+                    <strong style={{ width: "140px" }}>Kamera:</strong>
                     <span
                       style={{
                         color: facility.hasSecurityCameras ? "green" : "red",
@@ -435,7 +433,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Dolap:</strong>
                     <span
                       style={{
@@ -446,7 +444,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Soyunma Odası:</strong>
                     <span
                       style={{
@@ -457,7 +455,7 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex",marginBottom: "8px" }}>
+                  <div style={{ display: "flex", marginBottom: "8px" }}>
                     <strong style={{ width: "140px" }}>Hakem Hizmeti:</strong>
                     <span
                       style={{
@@ -470,32 +468,38 @@ const FacilityCard = ({ facility, onEdit, facilityId, onViewFields }) => {
                 </Col>
               </Row>
             </Card.Text>
-            <div
-              className="d-grid gap-2 mt-4"
-              style={{ gridTemplateColumns: "repeat(2, 1fr)", display: "grid" }}
-            >
-              <Button variant="primary" onClick={() => onEdit(facility)}>
-                Düzenle
-              </Button>
+          <div
+  className="d-flex justify-content-between mt-4"
+  style={{ gap: "0.5rem", flexWrap: "wrap" }}
+>
+  <Button
+    variant="primary"
+    onClick={() => onEdit(facility)}
+    style={{ flex: "1 1 auto", maxWidth: "200px" }}
+  >
+    Düzenle
+  </Button>
 
-              <Button variant="info" onClick={() => onViewFields(facility)}>
-                Sahaları Görüntüle
-              </Button>
+  <Button
+    variant="success"
+    onClick={handleCreateClick}
+    style={{ flex: "1 1 auto", maxWidth: "200px" }}
+  >
+    Duyuru Ekle
+  </Button>
 
-              <Button variant="success" onClick={handleCreateClick}>
-                Duyuru Ekle
-              </Button>
+  <Button
+    variant="warning"
+    onClick={() => {
+      fetchAnnouncements();
+      setShowAllAnnouncementsModal(true);
+    }}
+    style={{ flex: "1 1 auto", maxWidth: "200px" }}
+  >
+    Duyuruları Görüntüle
+  </Button>
+</div>
 
-              <Button
-                variant="warning"
-                onClick={() => {
-                  fetchAnnouncements();
-                  setShowAllAnnouncementsModal(true);
-                }}
-              >
-                Duyuruları Görüntüle
-              </Button>
-            </div>
           </Col>
           <Col md={5}>
             <div className="d-flex justify-content-between align-items-center mb-2">

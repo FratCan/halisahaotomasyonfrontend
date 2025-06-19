@@ -286,10 +286,10 @@ const PersonPage = () => {
                     minLength={6}
                   />
                   <Form.Control.Feedback type="invalid">
-                    Şifre en az 6 karakter olmalıdır
+                    Şifre en az 10 karakter olmalıdır
                   </Form.Control.Feedback>
                   <Form.Text muted>
-                    Şifreniz en az 6 karakter uzunluğunda olmalıdır
+                    Şifreniz en az 10 karakter uzunluğunda olmalıdır
                   </Form.Text>
                 </Form.Group>
                 

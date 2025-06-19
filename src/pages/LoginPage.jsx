@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [validated, setValidated] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -52,17 +53,22 @@ export default function LoginPage() {
 
       // Rol uygunsa login ve navigate
       login(data);
+      if (rememberMe) {
+        localStorage.setItem("user", JSON.stringify(data)); // uzun süre hatırlansın
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(data)); // sadece sekme açıkken hatırlansın
+      }
+
       navigate("/home");
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Giriş başarısız. Lütfen bilgilerinizi kontrol ediniz."
+          "Giriş başarısız. Lütfen bilgilerinizi kontrol ediniz."
       );
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <Container fluid className="auth-page">
@@ -76,9 +82,11 @@ export default function LoginPage() {
                 </div>
               </div>
               <h2 className="fw-bold mb-0">Hesabınıza Giriş Yapın</h2>
-              <p className="text-muted mb-0">Devam etmek için lütfen giriş yapın</p>
+              <p className="text-muted mb-0">
+                Devam etmek için lütfen giriş yapın
+              </p>
             </Card.Header>
-            
+
             <Card.Body className="p-4 p-md-5">
               {error && (
                 <Alert variant="danger" className="text-center">
@@ -126,7 +134,7 @@ export default function LoginPage() {
                       )}
                     </button>
                     <Form.Control.Feedback type="invalid">
-                      Şifreniz en az 6 karakter olmalıdır.
+                      Şifreniz en az 10 karakter olmalıdır.
                     </Form.Control.Feedback>
                   </div>
                 </Form.Group>
@@ -137,11 +145,11 @@ export default function LoginPage() {
                     id="rememberMe"
                     label="Beni hatırla"
                     className="remember-me"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <Link
-                    to="/forgot-password"
-                    className="forgot-password-link"
-                  >
+
+                  <Link to="/forgot-password" className="forgot-password-link">
                     Şifremi unuttum
                   </Link>
                 </div>
@@ -154,7 +162,11 @@ export default function LoginPage() {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
                   ) : (
                     <LogIn size={18} className="me-2" />
                   )}
@@ -167,10 +179,7 @@ export default function LoginPage() {
 
                 <div className="text-center mt-3">
                   <span className="text-muted">Hesabınız yok mu? </span>
-                  <Link
-                    to="/register"
-                    className="register-link"
-                  >
+                  <Link to="/register" className="register-link">
                     Kayıt ol
                   </Link>
                 </div>
@@ -185,24 +194,24 @@ export default function LoginPage() {
           background-color: #f8f9fa;
           background-image: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
         }
-        
+
         .auth-card {
           border: none;
           border-radius: 12px;
           overflow: hidden;
         }
-        
+
         .auth-card-header {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border-bottom: none;
         }
-        
+
         .logo-container {
           display: flex;
           justify-content: center;
         }
-        
+
         .logo-icon {
           background-color: rgba(255, 255, 255, 0.2);
           width: 60px;
@@ -212,16 +221,16 @@ export default function LoginPage() {
           align-items: center;
           justify-content: center;
         }
-        
+
         .form-label {
           font-weight: 500;
           margin-bottom: 0.5rem;
         }
-        
+
         .password-input-group {
           position: relative;
         }
-        
+
         .password-toggle-btn {
           position: absolute;
           right: 12px;
@@ -232,7 +241,7 @@ export default function LoginPage() {
           cursor: pointer;
           padding: 0;
         }
-        
+
         .auth-btn {
           padding: 0.75rem;
           font-weight: 600;
@@ -241,53 +250,53 @@ export default function LoginPage() {
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           transition: all 0.3s ease;
         }
-        
+
         .auth-btn:hover {
           transform: translateY(-2px);
           box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .forgot-password-link {
           color: #6c757d;
           text-decoration: none;
           font-size: 0.875rem;
           transition: color 0.2s;
         }
-        
+
         .forgot-password-link:hover {
           color: #0d6efd;
           text-decoration: underline;
         }
-        
+
         .register-link {
           color: #0d6efd;
           font-weight: 500;
           text-decoration: none;
           transition: all 0.2s;
         }
-        
+
         .register-link:hover {
           text-decoration: underline;
         }
-        
+
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
           color: #6c757d;
         }
-        
+
         .divider::before,
         .divider::after {
           content: "";
           flex: 1;
           border-bottom: 1px solid #dee2e6;
         }
-        
+
         .divider-text {
           padding: 0 1rem;
         }
-        
+
         .remember-me .form-check-input:checked {
           background-color: #0d6efd;
           border-color: #0d6efd;

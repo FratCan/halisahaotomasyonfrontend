@@ -19,8 +19,10 @@ import {
 } from "../api/FieldsApi";
 import FacilitySelect from "../Components/FacilitySelect";
 import { getFacilities } from "../api/FacilityApi";
-
+import { getReservations } from "../api/ReservationApi";
 // Haftanın günlerini sabit tutuyoruz
+
+
 const WEEK_DAYS = [
   "Sunday",
   "Monday",
@@ -74,29 +76,30 @@ function FieldsPage({ facilityId, setFacilityId }) {
   };
 
   // localStorage'dan id'yi al
-useEffect(() => {
-  const storedFacilityId = localStorage.getItem("selectedFacilityId");
+  useEffect(() => {
+    const storedFacilityId = localStorage.getItem("selectedFacilityId");
 
-  if (storedFacilityId) {
-    const fetchAndCheckFacility = async () => {
-      const facilities = await getFacilities(ownerId);
-      setFacilities(facilities);
+    if (storedFacilityId) {
+      const fetchAndCheckFacility = async () => {
+        const facilities = await getFacilities(ownerId);
+        setFacilities(facilities);
 
-      const isOwned = facilities.some(f => f.id === Number(storedFacilityId));
+        const isOwned = facilities?.some(
+          (f) => f.id === Number(storedFacilityId)
+        );
 
-      if (!isOwned) {
-        console.log("Başka kullanıcıya ait tesis, sıfırlanıyor...");
-        localStorage.removeItem("selectedFacilityId");
-        setFacilityId(""); // veya null
-      } else {
-        setFacilityId(storedFacilityId);
-      }
-    };
+        if (!isOwned) {
+          console.log("Başka kullanıcıya ait tesis, sıfırlanıyor...");
+          localStorage.removeItem("selectedFacilityId");
+          setFacilityId(""); // veya null
+        } else {
+          setFacilityId(storedFacilityId);
+        }
+      };
 
-    fetchAndCheckFacility();
-  }
-}, [ownerId]);
-
+      fetchAndCheckFacility();
+    }
+  }, [ownerId]);
 
   // id geldikten sonra verileri çek
   useEffect(() => {
@@ -207,7 +210,7 @@ useEffect(() => {
         WEEK_DAYS.map((_, i) => ({
           dayOfWeek: i,
           startTime: "08:00:00",
-          endTime: "23:00:00",
+          endTime: "23:00:00", //kapanma saati
         }))
       )
     );
@@ -218,6 +221,50 @@ useEffect(() => {
     setIsCreateMode(true);
     setShowModal(true);
   };
+const handleAddException = async () => {
+  const newDate = prompt("Kapatmak istediğiniz tarihi (yyyy-mm-dd) girin:");
+  if (!newDate) return;
+
+  const selectedDate = new Date(newDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Sadece gün karşılaştırması için
+
+  if (selectedDate < today) {
+    alert("❌ Geçmiş tarihler kapalı gün olarak eklenemez.");
+    return;
+  }
+
+  try {
+    let hasReservation = false;
+
+    for (const field of fields) {
+      const resList = await getReservations(field.id);
+      const exists = resList.some(
+        (r) => r.slotStart?.slice(0, 10) === newDate
+      );
+
+      if (exists) {
+        hasReservation = true;
+        break;
+      }
+    }
+
+    if (hasReservation) {
+      alert("❌ Bu tarihte mevcut rezervasyon olduğu için kapatılamaz.");
+      return;
+    }
+
+    if (!exceptions.find((ex) => ex.date === newDate)) {
+      setExceptions([...exceptions, { date: newDate, isOpen: false }]);
+    } else {
+      alert("⚠️ Bu tarih zaten eklenmiş.");
+    }
+  } catch (err) {
+    console.error("Rezervasyon kontrolü sırasında hata:", err);
+  }
+};
+
+
   // Modal kapatma
   const handleCloseModal = () => {
     setShowModal(false);
@@ -494,6 +541,7 @@ useEffect(() => {
                       name="name"
                       type="text"
                       defaultValue={selectedField.name}
+                      required
                     />
                   </Form.Group>
                   {/* Kapasite */}
@@ -502,7 +550,9 @@ useEffect(() => {
                     <Form.Control
                       name="capacity"
                       type="number"
-                      defaultValue={selectedField.capacity}
+                      defaultValue={selectedField.capacity || 10}
+                      required
+                      min="10"
                     />
                   </Form.Group>
                   {/* Boyut */}
@@ -536,6 +586,8 @@ useEffect(() => {
                         name="price"
                         type="number"
                         defaultValue={selectedField.pricePerHour}
+                        required
+                        min="0"
                       />
                       <InputGroup.Text>TL</InputGroup.Text>
                     </InputGroup>
@@ -648,12 +700,7 @@ useEffect(() => {
                   <Button
                     variant="secondary"
                     className="mt-2"
-                    onClick={() =>
-                      setExceptions([
-                        ...exceptions,
-                        { date: "", isOpen: false },
-                      ])
-                    }
+                    onClick={handleAddException}
                   >
                     + Kapalı Gün Ekle
                   </Button>
