@@ -52,19 +52,32 @@ export const createEquipments = async (facilityId, equipmentsData) => {
 };
 
 
-
 export const updateEquipment = async (facilityId, equipmentId, updatedData) => {
   try {
+    const formData = new FormData();
+    formData.append("name", updatedData.name);
+    formData.append("price", updatedData.price);
+    formData.append("quantity", updatedData.quantity);
+    formData.append("description", updatedData.description);
+    formData.append("isRentable", updatedData.isRentable);
+
     const { data } = await axios.put(
       `${API_URL}/${facilityId}/equipments/${equipmentId}`,
-      updatedData
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
+
     return data;
   } catch (error) {
     console.error("Update işlemi hatası:", error);
     throw error;
   }
 };
+
 
 export const deleteEquipment = async (facilityId, equipmentId) => {
   const { data } = await axios.delete(`${API_URL}/${facilityId}/equipments/${equipmentId}`);
