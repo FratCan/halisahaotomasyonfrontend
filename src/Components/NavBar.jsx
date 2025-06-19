@@ -10,6 +10,7 @@ import { useState } from "react";
 import { BellFill } from "react-bootstrap-icons";
 import { useAuth } from "../Context/AuthContext";
 import Notification from "./Notification";
+import { analyzeComments } from "../api/AiApi";
 
 function NavBar() {
   const { logout } = useAuth();
@@ -24,6 +25,8 @@ function NavBar() {
   const handleNotificationToggle = () =>
     setShowNotifications(!showNotifications);
   const handleNotificationClose = () => setShowNotifications(false);
+const [showSuggestions, setShowSuggestions] = useState(false);
+const [suggestions, setSuggestions] = useState([]);
 
   return (
     <>
@@ -122,6 +125,22 @@ function NavBar() {
 
           <Nav className="ms-auto">
             <Button
+  variant="outline-info"
+  className="me-3"
+  onClick={async () => {
+    try {
+      const result = await analyzeComments();
+      setSuggestions(result);
+      setShowSuggestions(true);
+    } catch (err) {
+      console.error("Öneri alınamadı:", err);
+    }
+  }}
+>
+  Öneri Al
+</Button>
+
+            <Button
               variant="outline-light"
               className="mx-3"
               onClick={handleNotificationToggle}
@@ -151,6 +170,46 @@ function NavBar() {
           </Nav>
         </Container>
       </Navbar>
+      <Offcanvas
+  show={showSuggestions}
+  onHide={() => setShowSuggestions(false)}
+  placement="end"
+  style={{
+    zIndex: 9999,
+    borderTopLeftRadius: "15px",
+    borderBottomLeftRadius: "15px",
+    overflow: "hidden",
+    boxShadow: "-4px 0px 15px rgba(0,0,0,0.25)",
+    width: "300px",
+  }}
+>
+  <Offcanvas.Header closeButton>
+    <Offcanvas.Title>Öneriler</Offcanvas.Title>
+  </Offcanvas.Header>
+  <Offcanvas.Body style={{ overflowY: "auto" }}>
+    {suggestions.length > 0 ? (
+      <ul style={{ padding: 0, listStyle: "none" }}>
+        {suggestions.map((item, index) => (
+          <li
+            key={index}
+            style={{
+              backgroundColor: "#f8f9fa",
+              borderLeft: "4px solid #17a2b8",
+              marginBottom: "10px",
+              padding: "10px",
+              borderRadius: "8px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+            }}
+          >
+            {item}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>Öneri bulunamadı.</p>
+    )}
+  </Offcanvas.Body>
+</Offcanvas>
 
       <Notification
         show={showNotifications}
