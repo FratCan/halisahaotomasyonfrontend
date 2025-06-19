@@ -5,6 +5,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import HomePage from "./pages/HomePage";
 import ReservationPage from "./pages/ReservationPage";
+import PaymentPage from "./pages/PaymentPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
@@ -44,7 +45,7 @@ function Appcontent() {
           />
           <Route path="/reservation" element={<ProtectedRoute><ReservationPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFoundPage />} />
-
+          <Route path="/payment" element={<ProtectedRoute><PaymentPage/></ProtectedRoute>} />
       </Routes>
     </>
   );

@@ -9,18 +9,17 @@ import Offcanvas from "react-bootstrap/Offcanvas";
 import { useState } from "react";
 import { BellFill } from "react-bootstrap-icons";
 import { useAuth } from "../Context/AuthContext";
-
-
+import Notification from "./Notification";
 
 function NavBar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
 
-const handleLogout = () => {
-  logout(); // kullanıcıyı sistemden at
-  navigate("/login"); // login sayfasına yönlendir
-};
+  const handleLogout = () => {
+    logout(); // kullanıcıyı sistemden at
+    navigate("/login"); // login sayfasına yönlendir
+  };
 
   const handleNotificationToggle = () =>
     setShowNotifications(!showNotifications);
@@ -28,11 +27,15 @@ const handleLogout = () => {
 
   return (
     <>
-      <Navbar expand="md" variant="dark" style={{ 
-        backgroundColor: "#0d1128",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-        padding: "0.5rem 0"
-      }}>
+      <Navbar
+        expand="md"
+        variant="dark"
+        style={{
+          backgroundColor: "#0d1128",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+          padding: "0.5rem 0",
+        }}
+      >
         <Container>
           <Navbar.Brand
             as={Link}
@@ -43,7 +46,7 @@ const handleLogout = () => {
               display: "flex",
               alignItems: "center",
               fontWeight: "600",
-              letterSpacing: "0.5px"
+              letterSpacing: "0.5px",
             }}
           >
             <Image
@@ -62,9 +65,9 @@ const handleLogout = () => {
               title="Bilgiler"
               id="basic-nav-dropdown"
               className="mx-3"
-              style={{ 
+              style={{
                 color: "#ffffff",
-                fontWeight: "500"
+                fontWeight: "500",
               }}
             >
               <NavDropdown.Item as={Link} to="/facility">
@@ -79,25 +82,25 @@ const handleLogout = () => {
               as={Link}
               to="/reservation"
               className="mx-3"
-              style={{ 
-                color: "#ffffff", 
+              style={{
+                color: "#ffffff",
                 fontWeight: "500",
                 transition: "all 0.2s ease",
                 ":hover": {
-                  color: "#f8f9fa"
-                }
+                  color: "#f8f9fa",
+                },
               }}
             >
               Rezervasyon
             </Nav.Link>
-
             <Nav.Link
-              href="#pricing"
+              as={Link}
+              to="/payment"
               className="mx-3"
-              style={{ 
-                color: "#ffffff", 
+              style={{
+                color: "#ffffff",
                 fontWeight: "500",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
               }}
             >
               Ödemeler
@@ -107,10 +110,10 @@ const handleLogout = () => {
               as={Link}
               to="/personal-info"
               className="mx-3"
-              style={{ 
-                color: "#ffffff", 
+              style={{
+                color: "#ffffff",
                 fontWeight: "500",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
               }}
             >
               Kişisel Bilgiler
@@ -129,18 +132,18 @@ const handleLogout = () => {
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                padding: "0"
+                padding: "0",
               }}
             >
               <BellFill size={18} />
             </Button>
-            <Button 
-              variant="warning" 
-              size="md" 
+            <Button
+              variant="warning"
+              size="md"
               onClick={handleLogout}
               style={{
                 fontWeight: "500",
-                padding: "0.375rem 1.25rem"
+                padding: "0.375rem 1.25rem",
               }}
             >
               Çıkış Yap
@@ -149,39 +152,10 @@ const handleLogout = () => {
         </Container>
       </Navbar>
 
-      <Offcanvas
+      <Notification
         show={showNotifications}
-        onHide={handleNotificationClose}
-        placement="end"
-        style={{
-          borderTopLeftRadius: "15px",
-          borderBottomLeftRadius: "15px",
-          overflow: "hidden",
-          boxShadow: "-4px 0px 15px rgba(0,0,0,0.25)",
-          width: "300px"
-        }}
-      >
-        <Offcanvas.Header 
-          closeButton
-          style={{
-            borderBottom: "1px solid #dee2e6",
-            padding: "1rem 1.25rem"
-          }}
-        >
-          <Offcanvas.Title style={{ fontWeight: "600" }}>Bildirimler</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body style={{ padding: "1rem 1.25rem" }}>
-          <ul style={{ 
-            listStyle: "none", 
-            padding: "0",
-            margin: "0"
-          }}>
-            <li style={{ padding: "0.5rem 0", borderBottom: "1px solid #f1f1f1" }}>⚽ Yeni maç rezervasyonu yapıldı</li>
-            <li style={{ padding: "0.5rem 0", borderBottom: "1px solid #f1f1f1" }}>🕒 Maç saatinize 1 saat kaldı</li>
-            <li style={{ padding: "0.5rem 0" }}>📢 Yeni bir duyuru var</li>
-          </ul>
-        </Offcanvas.Body>
-      </Offcanvas>
+        handleClose={handleNotificationClose}
+      />
     </>
   );
 }
