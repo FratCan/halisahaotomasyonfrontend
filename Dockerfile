@@ -1,5 +1,4 @@
-# Build aşaması
-FROM node:18 AS builder
+FROM node:18
 
 WORKDIR /app
 
@@ -11,15 +10,8 @@ COPY . .
 
 RUN npm run build
 
-# Nginx aşaması
-FROM nginx:alpine
+RUN npm install -g serve
 
-# SPA (React Router) desteği için özel nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 3000
 
-# React build klasörünü nginx’e kopyala
-COPY --from=builder /app/build /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "build", "-l", "3000"]
