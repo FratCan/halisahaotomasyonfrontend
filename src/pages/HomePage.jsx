@@ -258,21 +258,33 @@ for (let h = START_HOUR; h <= END_HOUR; h++) {
         </Col>
       </Row>
 
-      <style jsx>{`
-        .time-slots-container {
-          max-height: 500px;
-          overflow-y: auto;
-          padding: 5px;
-        }
-        .time-slot-button {
-          height: 90px;
-          transition: all 0.2s ease;
-        }
-        .time-slot-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-      `}</style>
+<style jsx>{`
+  .time-slots-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 5px;
+  }
+
+  .time-slot-button {
+    height: 90px;
+    transition: all 0.2s ease;
+  }
+  .time-slot-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Saat (üstteki) */
+  .time-slot-button span.fw-bold {
+    font-size: 1.4rem;   /* ≈ 22 px */
+  }
+
+  /* Durum metni (altındaki “Boş / Rezerve / …”) */
+  .time-slot-button small {
+    font-size: 1.1rem;   /* ≈ 17-18 px */
+  }
+`}</style>
+
     </Container>
   );
 }
