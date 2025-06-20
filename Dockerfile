@@ -1,5 +1,4 @@
-# Build aşaması
-FROM node:18 AS builder
+FROM node:18
 
 WORKDIR /app
 
@@ -11,13 +10,8 @@ COPY . .
 
 RUN npm run build
 
-# Nginx aşaması
-FROM nginx:alpine
+RUN npm install -g serve
 
-COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 3000
 
-# EXPOSE doğru port
-EXPOSE 80
-
-# nginx başlat
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "build", "-l", "3000"]
