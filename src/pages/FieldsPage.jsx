@@ -20,6 +20,7 @@ import {
 import FacilitySelect from "../Components/FacilitySelect";
 import { getFacilities } from "../api/FacilityApi";
 import { getReservations } from "../api/ReservationApi";
+import { hasWeeklyConflict } from "../utils/hasweeklycontrol"; // Haftalık çatışma kontrolü için fonksiyon
 // Haftanın günlerini sabit tutuyoruz
 
 
@@ -373,6 +374,22 @@ const handleAddException = async () => {
   const handleFieldUpdate = async (e) => {
     e.preventDefault();
     if (!selectedField) return;
+
+      /* 1️⃣  ÖNCE rezervasyonları al */
+  let reservations = [];
+  try {
+    reservations = await getReservations(selectedField.id);   // {slotStart, slotEnd}
+  } catch (err) {
+    console.error("Rezervasyonlar getirilemedi:", err);
+  }
+
+  /* 2️⃣  Yeni saatlerin rezervasyonla çakışmadığını doğrula */
+  if (hasWeeklyConflict(dedupeWeekly(weeklyOpenings), reservations)) {
+    alert(
+      "❌ Seçtiğiniz haftalık açılış saati aralıkları mevcut rezervasyonları kapsamıyor!"
+    );
+    return; // kaydetme
+  }
     const form = e.target.elements;
     const updatedData = {
       name: form.name.value,
